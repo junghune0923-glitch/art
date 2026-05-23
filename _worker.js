@@ -24,14 +24,20 @@ export class RoomObject {
     this.participants = new Map();
     this.messages = [];
     this.shares = [];
+    this.rooms = [];
+    this.canvas = null;
+    this.notes = [];
     this.loaded = false;
   }
 
   async load() {
     if (this.loaded) return;
-    const stored = await this.state.storage.get(["messages", "shares"]);
+    const stored = await this.state.storage.get(["messages", "shares", "rooms", "canvas", "notes"]);
     this.messages = stored.get("messages") || [];
     this.shares = stored.get("shares") || [];
+    this.rooms = stored.get("rooms") || [];
+    this.canvas = stored.get("canvas") || null;
+    this.notes = stored.get("notes") || [];
     this.loaded = true;
   }
 
@@ -53,7 +59,10 @@ export class RoomObject {
       type: "init",
       participants: [...this.participants.values()],
       messages: this.messages.slice(-80),
-      shares: this.shares
+      shares: this.shares,
+      rooms: this.rooms,
+      canvas: this.canvas,
+      notes: this.notes
     }));
 
     server.addEventListener("message", (event) => {
@@ -100,6 +109,45 @@ export class RoomObject {
       this.messages = this.messages.slice(-80);
       await this.state.storage.put("messages", this.messages);
       this.broadcast({ type: "chat", room: message.room, message: message.message });
+      return;
+    }
+
+    if (message.type === "rooms-state" && Array.isArray(message.rooms)) {
+      this.rooms = message.rooms;
+      await this.state.storage.put("rooms", this.rooms);
+      this.broadcast({ type: "rooms-state", room: message.room, rooms: this.rooms });
+      return;
+    }
+
+    if (message.type === "canvas-op" && message.operation) {
+      this.broadcast({
+        type: "canvas-op",
+        room: message.room,
+        dataRoom: message.dataRoom,
+        sourceId: message.sourceId,
+        operation: message.operation
+      });
+      return;
+    }
+
+    if (message.type === "canvas-state") {
+      if (message.canvas) {
+        this.canvas = message.canvas;
+        await this.state.storage.put("canvas", this.canvas);
+      }
+      if (Array.isArray(message.notes)) {
+        this.notes = message.notes;
+        await this.state.storage.put("notes", this.notes);
+      }
+      this.broadcast({
+        type: "canvas-state",
+        room: message.room,
+        dataRoom: message.dataRoom,
+        sourceId: message.sourceId,
+        canvas: message.canvas,
+        notes: message.notes,
+        updatedAt: message.updatedAt
+      });
       return;
     }
 
