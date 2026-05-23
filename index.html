@@ -494,22 +494,24 @@
 
     .paint-canvas {
       position: absolute;
-      left: 358px;
+      left: 354px;
       top: 0;
       z-index: 12;
-      width: 1318px;
-      height: 756px;
+      width: 1566px;
+      height: 1080px;
       touch-action: none;
+      transform-origin: 0 0;
     }
 
     .note-layer {
       position: absolute;
-      left: 358px;
+      left: 354px;
       top: 0;
       z-index: 15;
-      width: 1318px;
-      height: 756px;
+      width: 1566px;
+      height: 1080px;
       pointer-events: none;
+      transform-origin: 0 0;
     }
 
     .note-card {
@@ -554,6 +556,9 @@
     .tool-hot[data-row="4"] { top: 442px; }
     .tool-hot[data-row="5"] { top: 535px; }
     .tool-hot[data-row="6"] { top: 628px; }
+    .tool-hot[data-row="7"] { top: 721px; }
+    .tool-hot[data-row="8"] { top: 814px; }
+    .tool-hot[data-row="9"] { top: 907px; }
 
     .tool-cursor {
       position: absolute;
@@ -606,7 +611,7 @@
       right: 354px;
       bottom: 0;
       z-index: 31;
-      display: block;
+      display: none;
       height: 304px;
       background: var(--paper);
       border-top: 6px solid var(--ink);
@@ -619,11 +624,15 @@
       right: 0;
       bottom: 0;
       z-index: 32;
-      display: block;
+      display: none;
       width: 354px;
       background: var(--paper);
       border-left: 6px solid var(--ink);
       pointer-events: none;
+    }
+
+    .is-studio .bottom-modal {
+      display: none;
     }
 
     .is-studio .studio-topbar {
@@ -866,7 +875,9 @@
       flex-direction: column;
       gap: 7px;
       min-height: 84px;
-      overflow: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 2px;
     }
 
     .chat-line {
@@ -1290,7 +1301,7 @@
       <div class="home-content">
         <section class="home-panel">
           <h2>조별과제 대시보드</h2>
-          <p>활성 방 5개 · 라이브 4명 · 결과물 피드 대기 중</p>
+          <p>팀 방 · 실시간 통화 · 결과물 피드</p>
         </section>
         <div class="home-card-stack">
           <button class="home-card" type="button" data-home-screen="workspace">
@@ -1303,7 +1314,7 @@
           </button>
           <button class="home-card" type="button" data-home-screen="workspace">
             <strong>라이브 통화</strong>
-            <span>guest 001 · guest 002 접속</span>
+            <span>접속하면 팀원 목록에 표시</span>
           </button>
         </div>
       </div>
@@ -1328,8 +1339,8 @@
     </section>
 
     <section class="screen" id="studioScreen" aria-label="드로잉 작업공간">
-      <img class="mockup" src="PNG/아트보드 4.png" alt="" id="studioMockup" />
-      <canvas class="paint-canvas" id="paintCanvas" width="1318" height="756"></canvas>
+      <img class="mockup" src="PNG/ac아트보드 4.png" alt="" id="studioMockup" />
+      <canvas class="paint-canvas" id="paintCanvas" width="1566" height="1080"></canvas>
       <div class="note-layer" id="noteLayer"></div>
       <div class="shape-preview" id="shapePreview"></div>
       <div class="tool-cursor" id="toolCursor"></div>
@@ -1413,7 +1424,7 @@
     const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
     const DESIGN = { width: 1920, height: 1080 };
-    const PAINT = { x: 358, y: 0, width: 1318, height: 756 };
+    const PAINT = { x: 354, y: 0, width: 1566, height: 1080 };
     const ROW_TOPS = [366, 493, 621, 749, 877];
     const DEFAULT_ROOM = "000의 과제방";
     const STORAGE_KEY = "villain-page-state-v2";
@@ -1470,22 +1481,48 @@
       shares: [],
       notes: [],
       chatMessages: [
-        { id: 1, author: "시스템", text: "음성 채널이 열렸습니다." },
-        { id: 2, author: "guest 002", text: "캔버스 같이 보고 있어요." }
+        { id: 1, author: "시스템", text: "방에 들어오면 팀원 접속, 채팅, 통화 상태가 표시됩니다." }
       ],
-      people: [false, false, false, false],
+      participants: [],
       drawing: false,
+      panning: false,
       startPoint: null,
       lastPoint: null,
       undoStack: []
     };
 
-    const TEAM_MEMBERS = [
-      { name: "guest 001", role: "진행" },
-      { name: "guest 002", role: "편집" },
-      { name: "guest 003", role: "댓글" },
-      { name: "guest 004", role: "보기" }
-    ];
+    const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+    const getStoredId = () => {
+      const stored = localStorage.getItem("villain-client-id");
+      if (stored) return stored;
+      const next = makeId();
+      localStorage.setItem("villain-client-id", next);
+      return next;
+    };
+    const localUser = {
+      id: getStoredId(),
+      name: localStorage.getItem("villain-display-name") || `guest ${Math.floor(100 + Math.random() * 900)}`,
+      role: "나"
+    };
+    localStorage.setItem("villain-display-name", localUser.name);
+
+    const canvasView = {
+      scale: 1,
+      x: 0,
+      y: 0,
+      panStart: null
+    };
+
+    const realtime = {
+      socket: null,
+      roomKey: null,
+      connected: false,
+      reconnectTimer: null,
+      participants: new Map(),
+      peers: new Map(),
+      localStream: null,
+      remoteAudio: new Map()
+    };
 
     const fitFrame = () => {
       const scale = Math.min(window.innerWidth / DESIGN.width, window.innerHeight / DESIGN.height);
@@ -1513,6 +1550,9 @@
         element.classList.toggle("active", name === screen);
       });
       frame.classList.toggle("is-studio", screen === "studio");
+      if (screen === "studio" || screen === "result") {
+        connectRealtime();
+      }
       if (screen === "studio") {
         requestAnimationFrame(sizePaintCanvas);
         renderCollaborationPanel();
@@ -1539,6 +1579,38 @@
         };
         image.src = previous;
       }
+    };
+
+    const applyCanvasView = () => {
+      const transform = `translate(${canvasView.x}px, ${canvasView.y}px) scale(${canvasView.scale})`;
+      paintCanvas.style.transform = transform;
+      noteLayer.style.transform = transform;
+    };
+
+    const zoomCanvasAt = (event, factor) => {
+      const oldScale = canvasView.scale;
+      const nextScale = Math.max(0.35, Math.min(4, oldScale * factor));
+      if (Math.abs(nextScale - oldScale) < 0.001) return;
+
+      const frameRect = frame.getBoundingClientRect();
+      const scale = getFrameScale();
+      const localX = (event.clientX - frameRect.left) / scale;
+      const localY = (event.clientY - frameRect.top) / scale;
+      const paintPoint = toPaintPoint(event);
+
+      canvasView.scale = nextScale;
+      canvasView.x = localX - PAINT.x - paintPoint.x * nextScale;
+      canvasView.y = localY - PAINT.y - paintPoint.y * nextScale;
+      applyCanvasView();
+      showToast(`확대 ${Math.round(nextScale * 100)}%`);
+    };
+
+    const resetCanvasView = () => {
+      canvasView.scale = 1;
+      canvasView.x = 0;
+      canvasView.y = 0;
+      applyCanvasView();
+      showToast("캔버스 보기 초기화");
     };
 
     const toPaintPoint = (event) => {
@@ -1574,12 +1646,33 @@
       } else {
         paintCtx.globalCompositeOperation = "source-over";
         paintCtx.strokeStyle = "#000";
-        paintCtx.lineWidth = state.activeTool === "line" ? 7 : 8;
+        paintCtx.lineWidth = state.activeTool === "line" || state.activeTool === "lasso" ? 7 : 8;
+        if (state.activeTool === "lasso") {
+          paintCtx.setLineDash([18, 12]);
+        }
       }
       paintCtx.beginPath();
       paintCtx.moveTo(from.x, from.y);
       paintCtx.lineTo(to.x, to.y);
       paintCtx.stroke();
+      paintCtx.restore();
+    };
+
+    const drawRoughEllipse = (start, end) => {
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      const width = Math.abs(end.x - start.x);
+      const height = Math.abs(end.y - start.y);
+      if (width < 10 || height < 10) return;
+
+      paintCtx.save();
+      paintCtx.strokeStyle = "#000";
+      paintCtx.lineWidth = 6;
+      for (let i = 0; i < 3; i += 1) {
+        paintCtx.beginPath();
+        paintCtx.ellipse(x + width / 2 + i - 1, y + height / 2 - i, width / 2, height / 2, 0, 0, Math.PI * 2);
+        paintCtx.stroke();
+      }
       paintCtx.restore();
     };
 
@@ -1599,6 +1692,80 @@
       paintCtx.restore();
     };
 
+    const drawTriangle = (start, end) => {
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      const width = Math.abs(end.x - start.x);
+      const height = Math.abs(end.y - start.y);
+      if (width < 12 || height < 12) return;
+
+      paintCtx.save();
+      paintCtx.strokeStyle = "#000";
+      paintCtx.lineWidth = 7;
+      paintCtx.beginPath();
+      paintCtx.moveTo(x + width / 2, y);
+      paintCtx.lineTo(x + width, y + height);
+      paintCtx.lineTo(x, y + height);
+      paintCtx.closePath();
+      paintCtx.stroke();
+      paintCtx.restore();
+    };
+
+    const stampAt = (point, tool) => {
+      pushUndo();
+      paintCtx.save();
+      paintCtx.strokeStyle = "#000";
+      paintCtx.fillStyle = "#000";
+      paintCtx.lineWidth = 7;
+
+      if (tool === "spark") {
+        for (let i = 0; i < 10; i += 1) {
+          const angle = (Math.PI * 2 * i) / 10;
+          paintCtx.beginPath();
+          paintCtx.moveTo(point.x, point.y);
+          paintCtx.lineTo(point.x + Math.cos(angle) * 54, point.y + Math.sin(angle) * 54);
+          paintCtx.stroke();
+        }
+      }
+
+      if (tool === "fill") {
+        paintCtx.globalAlpha = 0.16;
+        paintCtx.fillRect(Math.max(0, point.x - 120), Math.max(0, point.y - 80), 240, 160);
+        paintCtx.globalAlpha = 1;
+        paintCtx.strokeRect(Math.max(0, point.x - 120), Math.max(0, point.y - 80), 240, 160);
+      }
+
+      if (tool === "pattern") {
+        for (let x = point.x - 72; x <= point.x + 72; x += 18) {
+          for (let y = point.y - 72; y <= point.y + 72; y += 18) {
+            paintCtx.fillRect(x, y, 8, 8);
+          }
+        }
+      }
+
+      if (tool === "stamp") {
+        paintCtx.beginPath();
+        paintCtx.arc(point.x, point.y - 28, 24, 0, Math.PI * 2);
+        paintCtx.stroke();
+        paintCtx.strokeRect(point.x - 42, point.y + 4, 84, 52);
+        paintCtx.beginPath();
+        paintCtx.moveTo(point.x - 58, point.y + 62);
+        paintCtx.lineTo(point.x + 58, point.y + 62);
+        paintCtx.stroke();
+      }
+
+      if (tool === "drop") {
+        paintCtx.beginPath();
+        paintCtx.moveTo(point.x, point.y - 58);
+        paintCtx.bezierCurveTo(point.x + 42, point.y - 6, point.x + 32, point.y + 54, point.x, point.y + 64);
+        paintCtx.bezierCurveTo(point.x - 32, point.y + 54, point.x - 42, point.y - 6, point.x, point.y - 58);
+        paintCtx.stroke();
+      }
+
+      paintCtx.restore();
+      saveState();
+    };
+
     const setShapePreview = (start, end) => {
       const x = Math.min(start.x, end.x);
       const y = Math.min(start.y, end.y);
@@ -1606,10 +1773,10 @@
       const height = Math.abs(end.y - start.y);
       Object.assign(shapePreview.style, {
         display: "block",
-        left: `${PAINT.x + x}px`,
-        top: `${PAINT.y + y}px`,
-        width: `${width}px`,
-        height: `${height}px`
+        left: `${PAINT.x + canvasView.x + x * canvasView.scale}px`,
+        top: `${PAINT.y + canvasView.y + y * canvasView.scale}px`,
+        width: `${width * canvasView.scale}px`,
+        height: `${height * canvasView.scale}px`
       });
     };
 
@@ -1642,19 +1809,305 @@
       return room?.name || DEFAULT_ROOM;
     };
 
-    const trimChatMessages = () => {
-      state.chatMessages = state.chatMessages.slice(-5);
+    const currentRoomKey = () => {
+      const room = state.rooms.find((item) => item.id === state.selectedRoomId);
+      return String(room?.id || "lobby");
     };
 
-    const addTeamMessage = (author, text) => {
-      state.chatMessages.push({
-        id: Date.now() + Math.random(),
-        author,
-        text
+    const getFrameScale = () => Number(getComputedStyle(frame).getPropertyValue("--scale")) || 1;
+
+    const updateLocalParticipant = () => {
+      const participant = {
+        ...localUser,
+        micMuted: state.micMuted,
+        cameraOn: state.cameraOn,
+        screenSharing: state.screenSharing,
+        calling: Boolean(realtime.localStream),
+        self: true,
+        updatedAt: Date.now()
+      };
+      realtime.participants.set(localUser.id, participant);
+      state.participants = [...realtime.participants.values()];
+      return participant;
+    };
+
+    const visibleParticipants = () => {
+      updateLocalParticipant();
+      return [...realtime.participants.values()].sort((a, b) => {
+        if (a.id === localUser.id) return -1;
+        if (b.id === localUser.id) return 1;
+        return (a.name || "").localeCompare(b.name || "");
       });
+    };
+
+    const sendRealtime = (payload) => {
+      if (!realtime.connected || realtime.socket?.readyState !== WebSocket.OPEN) return false;
+      realtime.socket.send(JSON.stringify({
+        ...payload,
+        room: currentRoomKey(),
+        user: updateLocalParticipant()
+      }));
+      return true;
+    };
+
+    const broadcastPresence = () => {
+      updateLocalParticipant();
+      sendRealtime({ type: "presence" });
+      renderCollaborationPanel();
+    };
+
+    const connectRealtime = () => {
+      if (location.protocol === "file:") {
+        realtime.connected = false;
+        updateLocalParticipant();
+        renderCollaborationPanel();
+        return;
+      }
+
+      const roomKey = currentRoomKey();
+      if (realtime.connected && realtime.roomKey === roomKey) return;
+      if (realtime.socket) {
+        realtime.socket.close();
+      }
+
+      const realtimeBase = window.VILLAIN_REALTIME_BASE || "";
+      const base = realtimeBase ? new URL(realtimeBase, location.href) : location;
+      const scheme = base.protocol === "https:" ? "wss:" : "ws:";
+      const prefix = realtimeBase ? base.pathname.replace(/\/$/, "") : "";
+      const url = `${scheme}//${base.host}${prefix}/api/room/${encodeURIComponent(roomKey)}/ws`;
+      realtime.roomKey = roomKey;
+      realtime.socket = new WebSocket(url);
+
+      realtime.socket.addEventListener("open", () => {
+        realtime.connected = true;
+        realtime.participants.clear();
+        updateLocalParticipant();
+        sendRealtime({ type: "join" });
+        renderCollaborationPanel();
+        showToast("실시간 작업공간 연결 완료");
+      });
+
+      realtime.socket.addEventListener("message", (event) => {
+        try {
+          handleRealtimeMessage(JSON.parse(event.data));
+        } catch {
+          showToast("실시간 메시지를 읽지 못했습니다.");
+        }
+      });
+
+      realtime.socket.addEventListener("close", () => {
+        realtime.connected = false;
+        realtime.participants.clear();
+        updateLocalParticipant();
+        renderCollaborationPanel();
+        clearTimeout(realtime.reconnectTimer);
+        if (state.screen === "studio") {
+          realtime.reconnectTimer = setTimeout(connectRealtime, 1600);
+        }
+      });
+    };
+
+    const handleRealtimeMessage = async (message) => {
+      if (!message || message.room !== currentRoomKey()) return;
+
+      if (Array.isArray(message.participants)) {
+        realtime.participants.clear();
+        message.participants.forEach((participant) => realtime.participants.set(participant.id, participant));
+        updateLocalParticipant();
+        renderCollaborationPanel();
+      }
+
+      if (message.type === "init") {
+        if (Array.isArray(message.messages) && message.messages.length) {
+          state.chatMessages = message.messages;
+        }
+        if (Array.isArray(message.shares)) {
+          state.shares = message.shares;
+        }
+        renderCollaborationPanel();
+        renderResults();
+        saveState();
+      }
+
+      if (message.type === "chat" && message.message) {
+        addTeamMessage(message.message.author, message.message.text, {
+          id: message.message.id,
+          broadcast: false
+        });
+      }
+
+      if (message.type === "share" && message.share && !state.shares.some((item) => String(item.id) === String(message.share.id))) {
+        state.shares.unshift(message.share);
+        renderResults();
+        saveState(true);
+      }
+
+      if (message.type === "comment") {
+        const share = state.shares.find((item) => String(item.id) === String(message.shareId));
+        if (share) {
+          share.comments = Array.isArray(share.comments) ? share.comments : [];
+          if (!share.comments.some((item) => item.id === message.comment?.id)) {
+            share.comments.push(message.comment);
+          }
+          renderResults();
+          saveState();
+        }
+      }
+
+      if (message.type === "reaction") {
+        const share = state.shares.find((item) => String(item.id) === String(message.shareId));
+        if (share) {
+          share.reactions = Math.max(share.reactions || 0, message.reactions || 0);
+          renderResults();
+          saveState();
+        }
+      }
+
+      if (message.type === "signal" && message.to === localUser.id) {
+        await handleSignal(message.from, message.signal);
+      }
+    };
+
+    const trimChatMessages = () => {
+      state.chatMessages = state.chatMessages.slice(-80);
+    };
+
+    const addTeamMessage = (author, text, options = {}) => {
+      const id = options.id || makeId();
+      if (state.chatMessages.some((message) => message.id === id)) return;
+      const message = {
+        id,
+        author,
+        text,
+        createdAt: Date.now()
+      };
+      state.chatMessages.push(message);
       trimChatMessages();
       renderCollaborationPanel();
       saveState();
+      if (options.broadcast) {
+        sendRealtime({ type: "chat", message });
+      }
+    };
+
+    const ensureLocalStream = async () => {
+      if (realtime.localStream) return realtime.localStream;
+      if (!navigator.mediaDevices?.getUserMedia) {
+        showToast("이 브라우저에서 통화를 지원하지 않습니다.");
+        throw new Error("media devices unsupported");
+      }
+      realtime.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      realtime.localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !state.micMuted;
+      });
+      broadcastPresence();
+      return realtime.localStream;
+    };
+
+    const ensurePeer = async (peerId) => {
+      if (realtime.peers.has(peerId)) return realtime.peers.get(peerId);
+      const peer = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+      });
+      realtime.peers.set(peerId, peer);
+
+      peer.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendRealtime({
+            type: "signal",
+            to: peerId,
+            from: localUser.id,
+            signal: { candidate: event.candidate }
+          });
+        }
+      };
+
+      peer.ontrack = (event) => {
+        let audio = realtime.remoteAudio.get(peerId);
+        if (!audio) {
+          audio = document.createElement("audio");
+          audio.autoplay = true;
+          audio.playsInline = true;
+          audio.dataset.peer = peerId;
+          document.body.appendChild(audio);
+          realtime.remoteAudio.set(peerId, audio);
+        }
+        audio.srcObject = event.streams[0];
+      };
+
+      if (realtime.localStream) {
+        realtime.localStream.getTracks().forEach((track) => peer.addTrack(track, realtime.localStream));
+      }
+      return peer;
+    };
+
+    const callParticipant = async (peerId) => {
+      if (peerId === localUser.id) return;
+      const stream = await ensureLocalStream();
+      const peer = await ensurePeer(peerId);
+      stream.getTracks().forEach((track) => {
+        if (!peer.getSenders().some((sender) => sender.track === track)) {
+          peer.addTrack(track, stream);
+        }
+      });
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+      sendRealtime({
+        type: "signal",
+        to: peerId,
+        from: localUser.id,
+        signal: peer.localDescription
+      });
+    };
+
+    const startVoiceCall = async () => {
+      try {
+        await ensureLocalStream();
+        state.micMuted = false;
+        realtime.localStream.getAudioTracks().forEach((track) => {
+          track.enabled = true;
+        });
+        broadcastPresence();
+        visibleParticipants()
+          .filter((participant) => participant.id !== localUser.id)
+          .forEach((participant) => callParticipant(participant.id));
+        addTeamMessage("시스템", "음성 통화를 연결했습니다.");
+      } catch {
+        showToast("마이크 권한이 필요합니다.");
+      }
+    };
+
+    const handleSignal = async (peerId, signal) => {
+      if (!peerId || !signal) return;
+      const peer = await ensurePeer(peerId);
+
+      if (signal.type === "offer") {
+        await ensureLocalStream();
+        realtime.localStream.getTracks().forEach((track) => {
+          if (!peer.getSenders().some((sender) => sender.track === track)) {
+            peer.addTrack(track, realtime.localStream);
+          }
+        });
+        await peer.setRemoteDescription(new RTCSessionDescription(signal));
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        sendRealtime({
+          type: "signal",
+          to: peerId,
+          from: localUser.id,
+          signal: peer.localDescription
+        });
+        return;
+      }
+
+      if (signal.type === "answer") {
+        await peer.setRemoteDescription(new RTCSessionDescription(signal));
+        return;
+      }
+
+      if (signal.candidate) {
+        await peer.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      }
     };
 
     const applyCollabMode = () => {
@@ -1662,14 +2115,19 @@
     };
 
     const renderCollaborationPanel = () => {
-      const mutedCount = state.people.filter(Boolean).length + (state.micMuted ? 1 : 0);
+      const participants = visibleParticipants();
+      const mutedCount = participants.filter((participant) => participant.micMuted).length;
       studioRoomTitle.textContent = currentRoomName();
       studioRoomStatus.textContent = state.screenSharing
         ? "팀 작업 · 화면 공유 중"
         : `팀 작업 · 버전 ${state.versionCount}`;
-      callStatus.textContent = `${TEAM_MEMBERS.length}명 접속 · ${mutedCount}명 음소거 · ${state.syncReady ? "동기화 완료" : "동기화 대기"}`;
+      callStatus.textContent = realtime.connected
+        ? `${participants.length}명 접속 · ${mutedCount}명 음소거 · ${state.syncReady ? "동기화 완료" : "동기화 대기"}`
+        : "실시간 서버 연결 대기 · 배포 후 Worker 연결 필요";
 
-      micToggle.textContent = state.micMuted ? "마이크 꺼짐" : "마이크 켜짐";
+      micToggle.textContent = realtime.localStream
+        ? (state.micMuted ? "마이크 꺼짐" : "마이크 켜짐")
+        : "통화 시작";
       micToggle.classList.toggle("is-danger", state.micMuted);
       micToggle.setAttribute("aria-pressed", String(state.micMuted));
 
@@ -1682,23 +2140,23 @@
       screenToggle.setAttribute("aria-pressed", String(state.screenSharing));
 
       participantList.innerHTML = "";
-      TEAM_MEMBERS.forEach((member, index) => {
+      participants.forEach((member) => {
         const button = document.createElement("button");
-        const muted = Boolean(state.people[index]);
+        const muted = Boolean(member.micMuted);
         button.className = `participant-row${muted ? " is-muted" : ""}`;
         button.type = "button";
-        button.dataset.personToggle = String(index);
+        button.disabled = true;
 
         const dot = document.createElement("span");
         dot.className = "presence-dot";
         dot.setAttribute("aria-hidden", "true");
 
         const name = document.createElement("span");
-        name.textContent = `${member.name} · ${member.role}`;
+        name.textContent = `${member.name}${member.id === localUser.id ? " · 나" : ""}`;
 
         const status = document.createElement("span");
         status.className = "participant-state";
-        status.textContent = muted ? "음소거" : "통화중";
+        status.textContent = member.calling ? (muted ? "음소거" : "통화중") : "접속";
 
         button.append(dot, name, status);
         participantList.appendChild(button);
@@ -1720,7 +2178,7 @@
       });
 
       chatLog.innerHTML = "";
-      state.chatMessages.slice(-4).forEach((message) => {
+      state.chatMessages.slice(-24).forEach((message) => {
         const line = document.createElement("div");
         line.className = "chat-line";
         const author = document.createElement("strong");
@@ -1729,6 +2187,9 @@
         text.textContent = message.text;
         line.append(author, text);
         chatLog.appendChild(line);
+      });
+      requestAnimationFrame(() => {
+        chatLog.scrollTop = chatLog.scrollHeight;
       });
 
       applyCollabMode();
@@ -1781,7 +2242,7 @@
 
         const meta = document.createElement("span");
         meta.className = "room-card-meta";
-        meta.textContent = `${TEAM_MEMBERS.length}명 · 통화 가능`;
+        meta.textContent = "실시간 협업 · 통화 가능";
 
         button.append(name, meta);
         button.addEventListener("click", () => {
@@ -1853,13 +2314,23 @@
       ["line", 0, 5],
       ["arrow", 1, 5],
       ["eraser", 0, 6],
-      ["brush", 1, 6]
+      ["brush", 1, 6],
+      ["stamp", 0, 7],
+      ["voice", 1, 7],
+      ["drop", 0, 8],
+      ["triangle", 1, 8]
     ];
 
     const setTool = (tool, silent = false) => {
       state.activeTool = tool;
       toolCursor.classList.remove("show");
-      paintCanvas.style.cursor = ["brush", "eraser", "shape", "line", "text", "arrow"].includes(tool) ? "crosshair" : "default";
+      if (tool === "hand") {
+        paintCanvas.style.cursor = "grab";
+      } else if (tool === "zoom") {
+        paintCanvas.style.cursor = "zoom-in";
+      } else {
+        paintCanvas.style.cursor = ["brush", "eraser", "shape", "line", "text", "arrow", "lasso", "spark", "fill", "pattern", "stamp", "drop", "triangle"].includes(tool) ? "crosshair" : "default";
+      }
       if (!silent) {
         showToast(`${toolLabel(tool)} 선택`);
       }
@@ -1879,7 +2350,11 @@
       line: "선",
       arrow: "화살표",
       eraser: "지우개",
-      brush: "펜"
+      brush: "펜",
+      stamp: "도장",
+      voice: "음성",
+      drop: "물방울",
+      triangle: "삼각형"
     }[tool] || tool);
 
     const renderStudioControls = () => {
@@ -1892,7 +2367,15 @@
         button.dataset.col = String(col);
         button.dataset.row = String(row);
         button.textContent = toolLabel(tool);
-        button.addEventListener("click", () => setTool(tool));
+        button.addEventListener("click", () => {
+          setTool(tool);
+          if (tool === "voice") {
+            startVoiceCall();
+          }
+          if (tool === "crop") {
+            resetCanvasView();
+          }
+        });
         studioControls.appendChild(button);
       });
     };
@@ -1908,14 +2391,16 @@
       }
       if (action === "share") {
         const image = await composeStudioImage();
-        state.shares.unshift({
+        const share = {
           id: Date.now(),
           title: `결과물 ${String(state.shares.length + 1).padStart(2, "0")}`,
           image,
           author: currentRoomName(),
           reactions: 0,
           comments: []
-        });
+        };
+        state.shares.unshift(share);
+        sendRealtime({ type: "share", share });
         renderResults();
         setScreen("result");
         saveState(true);
@@ -1934,13 +2419,43 @@
       if (state.screen !== "studio") return;
       const point = toPaintPoint(event);
 
+      if (state.activeTool === "hand") {
+        state.panning = true;
+        const frameScale = getFrameScale();
+        canvasView.panStart = {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          x: canvasView.x,
+          y: canvasView.y,
+          frameScale
+        };
+        paintCanvas.style.cursor = "grabbing";
+        paintCanvas.setPointerCapture(event.pointerId);
+        return;
+      }
+
+      if (state.activeTool === "zoom") {
+        zoomCanvasAt(event, event.shiftKey || event.altKey ? 0.82 : 1.18);
+        return;
+      }
+
       if (state.activeTool === "text") {
         createNote(point);
         showToast("메모 추가");
         return;
       }
 
-      if (!["brush", "eraser", "shape", "line", "arrow"].includes(state.activeTool)) {
+      if (["spark", "fill", "pattern", "stamp", "drop"].includes(state.activeTool)) {
+        stampAt(point, state.activeTool);
+        return;
+      }
+
+      if (state.activeTool === "voice") {
+        startVoiceCall();
+        return;
+      }
+
+      if (!["brush", "eraser", "shape", "line", "arrow", "lasso", "triangle"].includes(state.activeTool)) {
         return;
       }
 
@@ -1950,16 +2465,24 @@
       state.lastPoint = point;
       paintCanvas.setPointerCapture(event.pointerId);
 
-      if (state.activeTool === "shape") {
+      if (state.activeTool === "shape" || state.activeTool === "triangle") {
         setShapePreview(point, point);
       }
     });
 
     paintCanvas.addEventListener("pointermove", (event) => {
+      if (state.panning && canvasView.panStart) {
+        const scale = canvasView.panStart.frameScale || getFrameScale();
+        canvasView.x = canvasView.panStart.x + (event.clientX - canvasView.panStart.clientX) / scale;
+        canvasView.y = canvasView.panStart.y + (event.clientY - canvasView.panStart.clientY) / scale;
+        applyCanvasView();
+        return;
+      }
+
       if (!state.drawing || !state.lastPoint) return;
       const point = toPaintPoint(event);
 
-      if (state.activeTool === "shape") {
+      if (state.activeTool === "shape" || state.activeTool === "triangle") {
         setShapePreview(state.startPoint, point);
         return;
       }
@@ -1973,11 +2496,23 @@
     });
 
     const finishDrawing = (event) => {
+      if (state.panning) {
+        state.panning = false;
+        canvasView.panStart = null;
+        paintCanvas.style.cursor = "grab";
+        return;
+      }
+
       if (!state.drawing || !state.startPoint) return;
       const point = toPaintPoint(event);
 
       if (state.activeTool === "shape") {
-        drawRoughRect(state.startPoint, point);
+        drawRoughEllipse(state.startPoint, point);
+        shapePreview.style.display = "none";
+      }
+
+      if (state.activeTool === "triangle") {
+        drawTriangle(state.startPoint, point);
         shapePreview.style.display = "none";
       }
 
@@ -1996,6 +2531,11 @@
 
     paintCanvas.addEventListener("pointerup", finishDrawing);
     paintCanvas.addEventListener("pointercancel", finishDrawing);
+    paintCanvas.addEventListener("wheel", (event) => {
+      if (state.screen !== "studio") return;
+      event.preventDefault();
+      zoomCanvasAt(event, event.deltaY < 0 ? 1.1 : 0.9);
+    }, { passive: false });
 
     const drawArrowHead = (from, to) => {
       const angle = Math.atan2(to.y - from.y, to.x - from.x);
@@ -2186,7 +2726,7 @@
         shares: state.shares,
         notes: state.notes,
         chatMessages: state.chatMessages,
-        people: state.people,
+        participants: state.participants,
         canvas: includeCanvas ? paintCanvas.toDataURL("image/png") : undefined
       };
       if (!includeCanvas) {
@@ -2220,8 +2760,18 @@
       state.rooms = Array.isArray(saved.rooms) && saved.rooms.length ? saved.rooms : state.rooms;
       state.shares = Array.isArray(saved.shares) ? saved.shares : [];
       state.notes = Array.isArray(saved.notes) ? saved.notes : [];
-      state.chatMessages = Array.isArray(saved.chatMessages) && saved.chatMessages.length ? saved.chatMessages : state.chatMessages;
-      state.people = Array.isArray(saved.people) ? saved.people : state.people;
+      if (Array.isArray(saved.chatMessages) && saved.chatMessages.length) {
+        state.chatMessages = saved.chatMessages.filter((message) => (
+          message.text !== "캔버스 같이 보고 있어요." &&
+          message.text !== "음성 채널이 열렸습니다."
+        ));
+        if (!state.chatMessages.length) {
+          state.chatMessages = [
+            { id: 1, author: "시스템", text: "방에 들어오면 팀원 접속, 채팅, 통화 상태가 표시됩니다." }
+          ];
+        }
+      }
+      state.participants = Array.isArray(saved.participants) ? saved.participants : [];
       applyModalState();
       applyTheme();
       renderRooms();
@@ -2256,31 +2806,30 @@
       if (!button || !collabPanel.contains(button)) return;
 
       if (button.dataset.call === "mic") {
+        if (!realtime.localStream) {
+          startVoiceCall();
+          return;
+        }
         state.micMuted = !state.micMuted;
-        addTeamMessage("나", state.micMuted ? "마이크를 껐습니다." : "마이크를 켰습니다.");
-        renderCollaborationPanel();
+        realtime.localStream.getAudioTracks().forEach((track) => {
+          track.enabled = !state.micMuted;
+        });
+        addTeamMessage(localUser.name, state.micMuted ? "마이크를 껐습니다." : "마이크를 켰습니다.");
+        broadcastPresence();
         saveState();
       }
 
       if (button.dataset.call === "camera") {
         state.cameraOn = !state.cameraOn;
-        addTeamMessage("나", state.cameraOn ? "카메라를 켰습니다." : "카메라를 껐습니다.");
-        renderCollaborationPanel();
+        addTeamMessage(localUser.name, state.cameraOn ? "카메라 상태를 켰습니다." : "카메라 상태를 껐습니다.");
+        broadcastPresence();
         saveState();
       }
 
       if (button.dataset.call === "screen") {
         state.screenSharing = !state.screenSharing;
-        addTeamMessage("나", state.screenSharing ? "화면 공유를 시작했습니다." : "화면 공유를 종료했습니다.");
-        renderCollaborationPanel();
-        saveState();
-      }
-
-      if (button.dataset.personToggle !== undefined) {
-        const index = Number(button.dataset.personToggle);
-        state.people[index] = !state.people[index];
-        addTeamMessage(TEAM_MEMBERS[index].name, state.people[index] ? "음소거 상태입니다." : "다시 통화에 참여했습니다.");
-        renderCollaborationPanel();
+        addTeamMessage(localUser.name, state.screenSharing ? "화면 공유 상태를 켰습니다." : "화면 공유 상태를 껐습니다.");
+        broadcastPresence();
         saveState();
       }
 
@@ -2289,7 +2838,7 @@
         if (state.commentMode) {
           setTool("text", true);
         }
-        addTeamMessage("나", state.commentMode ? "댓글 핀 모드를 켰습니다." : "댓글 핀 모드를 껐습니다.");
+        addTeamMessage(localUser.name, state.commentMode ? "댓글 핀 모드를 켰습니다." : "댓글 핀 모드를 껐습니다.");
         renderCollaborationPanel();
         saveState();
       }
@@ -2303,7 +2852,7 @@
 
       if (button.dataset.feature === "focus") {
         state.focusMode = !state.focusMode;
-        addTeamMessage("나", state.focusMode ? "집중 모드를 켰습니다." : "집중 모드를 껐습니다.");
+        addTeamMessage(localUser.name, state.focusMode ? "집중 모드를 켰습니다." : "집중 모드를 껐습니다.");
         renderCollaborationPanel();
         saveState();
       }
@@ -2325,7 +2874,7 @@
       const message = chatInput.value.trim();
       if (!message) return;
       chatInput.value = "";
-      addTeamMessage("나", message);
+      addTeamMessage(localUser.name, message, { broadcast: true });
     });
 
     resultLayer.addEventListener("click", (event) => {
@@ -2344,6 +2893,11 @@
         share.reactions = (share.reactions || 0) + 1;
         renderResults();
         saveState();
+        sendRealtime({
+          type: "reaction",
+          shareId: share.id,
+          reactions: share.reactions
+        });
       }
 
       if (button.dataset.resultAction === "share") {
@@ -2362,10 +2916,16 @@
       if (!share || !text) return;
 
       share.comments = Array.isArray(share.comments) ? share.comments : [];
-      share.comments.push({ author: "나", text });
+      const comment = { id: makeId(), author: localUser.name, text };
+      share.comments.push(comment);
       input.value = "";
       renderResults();
       saveState();
+      sendRealtime({
+        type: "comment",
+        shareId: share.id,
+        comment
+      });
     });
 
     resultUpload.addEventListener("change", () => {
@@ -2375,14 +2935,16 @@
       const reader = new FileReader();
       reader.onload = () => {
         const baseName = file.name.replace(/\.[^.]+$/, "") || "업로드 결과물";
-        state.shares.unshift({
+        const share = {
           id: Date.now(),
           title: baseName,
           image: reader.result,
-          author: "나",
+          author: localUser.name,
           reactions: 0,
           comments: []
-        });
+        };
+        state.shares.unshift(share);
+        sendRealtime({ type: "share", share });
         resultUpload.value = "";
         renderResults();
         saveState(true);
@@ -2425,6 +2987,7 @@
     renderRooms();
     renderCollaborationPanel();
     setTool("brush", true);
+    applyCanvasView();
     applyModalState();
     applyTheme();
     loadState();
