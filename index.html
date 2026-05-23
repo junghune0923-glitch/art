@@ -1561,6 +1561,7 @@
     const DEFAULT_ROOM = "000의 과제방";
     const STORAGE_KEY = "villain-page-state-v2";
     const ROOM_STORAGE_PREFIX = "villain-room-state-v1";
+    const DEFAULT_DISQUS_SHORTNAME = "asd232cas";
 
     const sanitizeDisqusShortname = (value) => String(value || "")
       .trim()
@@ -1568,7 +1569,7 @@
       .replace(/[^a-z0-9-]/g, "");
 
     const appConfig = {
-      disqusShortname: sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || ""),
+      disqusShortname: sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || DEFAULT_DISQUS_SHORTNAME),
       loaded: false
     };
 
@@ -2908,7 +2909,7 @@
           renderResults();
         }
       } catch {
-        appConfig.disqusShortname = sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || "");
+        appConfig.disqusShortname = sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || DEFAULT_DISQUS_SHORTNAME);
       } finally {
         appConfig.loaded = true;
         scheduleDisqusMount();
