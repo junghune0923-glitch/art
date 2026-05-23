@@ -162,6 +162,24 @@
       border-radius: 999px;
     }
 
+    .nav-share-tab {
+      left: 1424px;
+      top: 73px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 216px;
+      height: 86px;
+      color: var(--paper);
+      background: var(--ink);
+      border: 6px solid var(--ink);
+      border-radius: 999px;
+      box-shadow: 5px 5px 0 var(--modal-shadow);
+      font-family: var(--font-heavy);
+      font-size: 31px;
+      font-weight: 900;
+    }
+
     .is-studio .nav-hotspots {
       display: none;
     }
@@ -1029,12 +1047,25 @@
       flex-direction: column;
       gap: 26px;
       width: 1308px;
-      min-height: 720px;
+      height: 802px;
       padding: 0 22px 120px 0;
-      overflow: visible;
+      overflow-y: auto;
       color: var(--ink);
       font-family: var(--font-ui);
       pointer-events: auto;
+    }
+
+    .result-layer::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .result-layer::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .result-layer::-webkit-scrollbar-thumb {
+      background: var(--ink);
+      border-radius: 999px;
     }
 
     .result-upload {
@@ -1137,6 +1168,11 @@
       background: var(--surface-strong);
     }
 
+    .share-action.is-primary {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
     .comment-list {
       display: flex;
       flex-direction: column;
@@ -1187,6 +1223,56 @@
     .comment-form button {
       height: 44px;
       font-size: 16px;
+    }
+
+    .disqus-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 430px;
+      padding: 24px 28px;
+      background: var(--surface-strong);
+      border: 6px solid var(--ink);
+      border-radius: 28px;
+      box-shadow: 6px 6px 0 var(--ink);
+    }
+
+    .disqus-heading {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .disqus-heading strong {
+      overflow: hidden;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .disqus-heading .share-action {
+      margin-left: auto;
+    }
+
+    .disqus-thread {
+      min-height: 320px;
+      padding: 18px;
+      background: var(--paper);
+      border: 4px solid var(--ink);
+      border-radius: 18px;
+    }
+
+    .disqus-state {
+      display: grid;
+      place-items: center;
+      min-height: 280px;
+      color: var(--muted-ink);
+      font-size: 19px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.35;
     }
 
     .toast {
@@ -1442,6 +1528,7 @@
       <button class="hotspot nav-main" type="button" data-screen="home">메인</button>
       <button class="hotspot nav-workspace" type="button" data-screen="workspace">작업공간</button>
       <button class="hotspot nav-result" type="button" data-screen="result">결과물</button>
+      <button class="hotspot nav-share-tab" type="button" data-screen="result" data-share-tab="true">공유</button>
     </div>
 
     <aside class="bottom-modal" id="bottomModal" aria-label="설정 모달" aria-expanded="false">
@@ -1474,6 +1561,16 @@
     const DEFAULT_ROOM = "000의 과제방";
     const STORAGE_KEY = "villain-page-state-v2";
     const ROOM_STORAGE_PREFIX = "villain-room-state-v1";
+
+    const sanitizeDisqusShortname = (value) => String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "");
+
+    const appConfig = {
+      disqusShortname: sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || ""),
+      loaded: false
+    };
 
     const frame = $("#appFrame");
     const toast = $("#toast");
@@ -1519,6 +1616,7 @@
       syncReady: true,
       versionCount: 0,
       selectedRoomId: null,
+      activeDisqusShareId: null,
       rooms: Array.from({ length: 5 }, (_, index) => ({
         id: index + 1,
         name: DEFAULT_ROOM,
@@ -1540,10 +1638,14 @@
 
     const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
     const getStoredId = () => {
-      const stored = localStorage.getItem("villain-client-id");
-      if (stored) return stored;
       const next = makeId();
-      localStorage.setItem("villain-client-id", next);
+      try {
+        const stored = sessionStorage.getItem("villain-client-id");
+        if (stored) return stored;
+        sessionStorage.setItem("villain-client-id", next);
+      } catch {
+        return next;
+      }
       return next;
     };
     const localUser = {
@@ -1906,16 +2008,16 @@
 
     const currentRoomName = () => {
       const room = state.rooms.find((item) => item.id === state.selectedRoomId);
-      return room?.name || DEFAULT_ROOM;
+      return room?.name || (state.selectedRoomId ? `${state.selectedRoomId}의 과제방` : DEFAULT_ROOM);
     };
 
     const currentRoomKey = () => {
       const room = state.rooms.find((item) => item.id === state.selectedRoomId);
-      return String(room?.id || "lobby");
+      return String(room?.id || state.selectedRoomId || "lobby");
     };
 
     const currentRealtimeKey = () => (
-      state.screen === "studio" ? currentRoomKey() : "lobby"
+      state.screen === "studio" || state.screen === "result" ? currentRoomKey() : "lobby"
     );
 
     const getFrameScale = () => Number(getComputedStyle(frame).getPropertyValue("--scale")) || 1;
@@ -2013,14 +2115,16 @@
         updateLocalParticipant();
         renderCollaborationPanel();
         clearTimeout(realtime.reconnectTimer);
-        if (state.screen === "studio") {
+        if (["workspace", "studio", "result"].includes(state.screen)) {
           realtime.reconnectTimer = setTimeout(connectRealtime, 1600);
         }
       });
     };
 
     const handleRealtimeMessage = async (message) => {
-      if (!message || message.room !== currentRealtimeKey()) return;
+      if (!message) return;
+      if (message.type !== "init" && message.room !== currentRealtimeKey()) return;
+      if (message.type === "init" && message.room && message.room !== currentRealtimeKey()) return;
 
       if (Array.isArray(message.participants)) {
         realtime.participants.clear();
@@ -2084,7 +2188,11 @@
           if (!share.comments.some((item) => item.id === message.comment?.id)) {
             share.comments.push(message.comment);
           }
-          renderResults();
+          if (String(share.id) === String(state.activeDisqusShareId)) {
+            refreshShareSummary(share);
+          } else {
+            renderResults();
+          }
           saveState();
         }
       }
@@ -2093,7 +2201,11 @@
         const share = state.shares.find((item) => String(item.id) === String(message.shareId));
         if (share) {
           share.reactions = Math.max(share.reactions || 0, message.reactions || 0);
-          renderResults();
+          if (String(share.id) === String(state.activeDisqusShareId)) {
+            refreshShareSummary(share);
+          } else {
+            renderResults();
+          }
           saveState();
         }
       }
@@ -2563,9 +2675,11 @@
           title: `결과물 ${String(state.shares.length + 1).padStart(2, "0")}`,
           image,
           author: currentRoomName(),
+          roomKey: currentRoomKey(),
           reactions: 0,
           comments: []
         };
+        share.disqusIdentifier = getShareIdentifier(share);
         state.shares.unshift(share);
         sendRealtime({ type: "share", share });
         renderResults();
@@ -2777,12 +2891,177 @@
       ctx.restore();
     };
 
+    const loadAppConfig = async () => {
+      if (location.protocol === "file:") {
+        appConfig.loaded = true;
+        scheduleDisqusMount();
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/config", { cache: "no-store" });
+        if (!response.ok) throw new Error("config unavailable");
+        const config = await response.json();
+        const shortname = sanitizeDisqusShortname(config.disqusShortname);
+        if (shortname) {
+          appConfig.disqusShortname = shortname;
+          renderResults();
+        }
+      } catch {
+        appConfig.disqusShortname = sanitizeDisqusShortname(window.VILLAIN_DISQUS_SHORTNAME || "");
+      } finally {
+        appConfig.loaded = true;
+        scheduleDisqusMount();
+      }
+    };
+
+    const getDisqusShortname = () => sanitizeDisqusShortname(
+      window.VILLAIN_DISQUS_SHORTNAME || appConfig.disqusShortname
+    );
+
+    const getShareIdentifier = (share) => (
+      share.disqusIdentifier || `art-room-${share.roomKey || currentRoomKey()}-share-${share.id}`
+    );
+
+    const getShareUrl = (share) => {
+      const url = (location.protocol === "http:" || location.protocol === "https:")
+        ? new URL(location.href)
+        : new URL("https://art-realtime.local/");
+      url.searchParams.set("room", share.roomKey || currentRoomKey());
+      url.searchParams.set("share", share.id);
+      url.hash = `share-${share.id}`;
+      return url.href;
+    };
+
+    const updateShareRoute = (share) => {
+      if (!(location.protocol === "http:" || location.protocol === "https:")) return;
+      const url = new URL(location.href);
+      if (share) {
+        url.searchParams.set("room", share.roomKey || currentRoomKey());
+        url.searchParams.set("share", share.id);
+        url.hash = `share-${share.id}`;
+      } else {
+        url.searchParams.delete("share");
+        url.hash = "";
+      }
+      history.replaceState(null, "", url);
+    };
+
+    const copyShareLink = async (share) => {
+      const url = getShareUrl(share);
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("공유 링크 복사 완료");
+      } catch {
+        showToast("공유 링크를 복사하지 못했습니다.");
+      }
+    };
+
+    const refreshShareSummary = (share) => {
+      const card = document.getElementById(`share-${share.id}`);
+      if (!card) return;
+      const meta = $(".share-meta", card);
+      if (meta) {
+        meta.textContent = `${share.author} · 실시간 댓글 ${share.comments.length}개`;
+      }
+      const reaction = $('[data-result-action="react"]', card);
+      if (reaction) {
+        reaction.textContent = `반응 ${share.reactions || 0}`;
+      }
+    };
+
+    const mirrorDisqusComment = (shareId, comment) => {
+      const share = state.shares.find((item) => String(item.id) === String(shareId));
+      const text = String(comment?.text || "").trim();
+      if (!share || !text) return;
+
+      share.comments = Array.isArray(share.comments) ? share.comments : [];
+      const id = `disqus-${comment?.id || makeId()}`;
+      if (share.comments.some((item) => item.id === id)) return;
+
+      const mirrored = {
+        id,
+        author: "Disqus",
+        text,
+        provider: "disqus",
+        createdAt: Date.now()
+      };
+      share.comments.push(mirrored);
+      if (String(share.id) === String(state.activeDisqusShareId)) {
+        refreshShareSummary(share);
+      } else {
+        renderResults();
+      }
+      saveState();
+      sendRealtime({
+        type: "comment",
+        shareId: share.id,
+        comment: mirrored
+      });
+    };
+
+    const scheduleDisqusMount = () => {
+      if (!state.activeDisqusShareId) return;
+      requestAnimationFrame(mountDisqusThread);
+    };
+
+    const mountDisqusThread = () => {
+      const mount = $("#disqus_thread");
+      if (!mount || !state.activeDisqusShareId) return;
+
+      const share = state.shares.find((item) => String(item.id) === String(state.activeDisqusShareId));
+      if (!share) return;
+
+      const shortname = getDisqusShortname();
+      if (!shortname) {
+        mount.innerHTML = '<div class="disqus-state">Disqus shortname 설정 필요<br>Cloudflare 변수 DISQUS_SHORTNAME을 추가하세요.</div>';
+        return;
+      }
+
+      const identifier = getShareIdentifier(share);
+      const config = function () {
+        this.page = this.page || {};
+        this.callbacks = this.callbacks || {};
+        this.page.url = getShareUrl(share);
+        this.page.identifier = identifier;
+        this.page.title = share.title;
+        this.callbacks.onNewComment = [function (comment) {
+          mirrorDisqusComment(share.id, comment);
+        }];
+      };
+
+      window.disqus_config = config;
+      if (window.DISQUS?.reset) {
+        window.DISQUS.reset({ reload: true, config });
+        return;
+      }
+
+      if ($("#disqus-embed-script")) return;
+      const script = document.createElement("script");
+      script.id = "disqus-embed-script";
+      script.src = `https://${shortname}.disqus.com/embed.js`;
+      script.async = true;
+      script.setAttribute("data-timestamp", String(Date.now()));
+      (document.head || document.body).appendChild(script);
+    };
+
+    const setActiveDisqusShare = (shareId) => {
+      state.activeDisqusShareId = shareId ? String(shareId) : null;
+      const share = state.shares.find((item) => String(item.id) === String(state.activeDisqusShareId));
+      updateShareRoute(share || null);
+      renderResults();
+      saveState();
+      scheduleDisqusMount();
+    };
+
     const ensureShareMeta = (share, index) => {
       share.id = share.id || Date.now() + index;
       share.title = share.title || `결과물 ${String(index + 1).padStart(2, "0")}`;
       share.author = share.author || "조별과제 팀";
       share.reactions = Number.isFinite(share.reactions) ? share.reactions : 0;
       share.comments = Array.isArray(share.comments) ? share.comments : [];
+      share.roomKey = share.roomKey || currentRoomKey();
+      share.disqusIdentifier = getShareIdentifier(share);
       return share;
     };
 
@@ -2796,7 +3075,7 @@
       const title = document.createElement("strong");
       title.textContent = "완성본 공유";
       const description = document.createElement("span");
-      description.textContent = "팀 완성본과 피드백 모음";
+      description.textContent = "팀 완성본과 Disqus 피드백 모음";
       uploadCopy.append(title, description);
 
       const uploadButton = document.createElement("button");
@@ -2819,8 +3098,10 @@
 
       state.shares.forEach((rawShare, index) => {
         const share = ensureShareMeta(rawShare, index);
+        const isDisqusOpen = String(share.id) === String(state.activeDisqusShareId);
         const card = document.createElement("article");
         card.className = "share-card";
+        card.id = `share-${share.id}`;
 
         const image = document.createElement("img");
         image.src = share.image;
@@ -2835,7 +3116,7 @@
 
         const meta = document.createElement("div");
         meta.className = "share-meta";
-        meta.textContent = `${share.author} · 댓글 ${share.comments.length}개`;
+        meta.textContent = `${share.author} · 실시간 댓글 ${share.comments.length}개`;
 
         const actions = document.createElement("div");
         actions.className = "share-actions";
@@ -2854,7 +3135,14 @@
         shareButton.dataset.result = String(share.id);
         shareButton.textContent = "공유";
 
-        actions.append(react, shareButton);
+        const disqusButton = document.createElement("button");
+        disqusButton.className = `share-action${isDisqusOpen ? " is-primary" : ""}`;
+        disqusButton.type = "button";
+        disqusButton.dataset.resultAction = "disqus";
+        disqusButton.dataset.result = String(share.id);
+        disqusButton.textContent = isDisqusOpen ? "댓글 열림" : "Disqus 댓글";
+
+        actions.append(react, shareButton, disqusButton);
 
         const comments = document.createElement("div");
         comments.className = "comment-list";
@@ -2887,7 +3175,34 @@
         body.append(heading, meta, actions, comments, form);
         card.append(image, body);
         resultLayer.appendChild(card);
+
+        if (isDisqusOpen) {
+          const disqusCard = document.createElement("section");
+          disqusCard.className = "disqus-card";
+          disqusCard.dataset.disqusFor = String(share.id);
+
+          const disqusHeading = document.createElement("div");
+          disqusHeading.className = "disqus-heading";
+          const disqusTitle = document.createElement("strong");
+          disqusTitle.textContent = `${share.title} 댓글`;
+          const close = document.createElement("button");
+          close.className = "share-action";
+          close.type = "button";
+          close.dataset.resultAction = "close-disqus";
+          close.dataset.result = String(share.id);
+          close.textContent = "닫기";
+          disqusHeading.append(disqusTitle, close);
+
+          const thread = document.createElement("div");
+          thread.className = "disqus-thread";
+          thread.id = "disqus_thread";
+          thread.innerHTML = '<div class="disqus-state">Disqus 댓글 로드 중</div>';
+
+          disqusCard.append(disqusHeading, thread);
+          resultLayer.appendChild(disqusCard);
+        }
       });
+      scheduleDisqusMount();
     };
 
     const roomStateKey = (roomKey = currentRoomKey()) => `${ROOM_STORAGE_PREFIX}:${roomKey}`;
@@ -2961,6 +3276,7 @@
         syncReady: state.syncReady,
         versionCount: state.versionCount,
         selectedRoomId: state.selectedRoomId,
+        activeDisqusShareId: state.activeDisqusShareId,
         rooms: state.rooms,
         shares: state.shares,
         chatMessages: state.chatMessages,
@@ -2990,6 +3306,7 @@
       state.syncReady = saved.syncReady !== false;
       state.versionCount = Number.isFinite(saved.versionCount) ? saved.versionCount : 0;
       state.selectedRoomId = saved.selectedRoomId || state.selectedRoomId;
+      state.activeDisqusShareId = saved.activeDisqusShareId || null;
       state.rooms = Array.isArray(saved.rooms) && saved.rooms.length ? saved.rooms : state.rooms;
       state.shares = Array.isArray(saved.shares) ? saved.shares : [];
       if (Array.isArray(saved.chatMessages) && saved.chatMessages.length) {
@@ -3017,6 +3334,34 @@
       loadRoomState();
       renderResults();
       renderCollaborationPanel();
+    };
+
+    const applyRouteState = () => {
+      if (!(location.protocol === "http:" || location.protocol === "https:")) return;
+
+      const params = new URLSearchParams(location.search);
+      const roomParam = params.get("room");
+      const hashShare = location.hash.startsWith("#share-") ? location.hash.slice(7) : "";
+      const shareParam = params.get("share") || hashShare;
+
+      if (roomParam) {
+        const roomId = /^\d+$/.test(roomParam) ? Number(roomParam) : roomParam;
+        state.selectedRoomId = roomId;
+        if (!state.rooms.some((room) => String(room.id) === String(roomId))) {
+          state.rooms.unshift({
+            id: roomId,
+            name: `${roomParam}의 과제방`,
+            custom: true
+          });
+        }
+        renderRooms();
+      }
+
+      if (shareParam) {
+        state.activeDisqusShareId = decodeURIComponent(shareParam);
+        setScreen("result");
+        renderResults();
+      }
     };
 
     bottomModal.addEventListener("click", () => {
@@ -3116,7 +3461,7 @@
       addTeamMessage(localUser.name, message, { broadcast: true });
     });
 
-    resultLayer.addEventListener("click", (event) => {
+    resultLayer.addEventListener("click", async (event) => {
       const button = event.target.closest("button");
       if (!button || !resultLayer.contains(button)) return;
 
@@ -3130,7 +3475,11 @@
 
       if (button.dataset.resultAction === "react") {
         share.reactions = (share.reactions || 0) + 1;
-        renderResults();
+        if (String(share.id) === String(state.activeDisqusShareId)) {
+          refreshShareSummary(share);
+        } else {
+          renderResults();
+        }
         saveState();
         sendRealtime({
           type: "reaction",
@@ -3140,7 +3489,15 @@
       }
 
       if (button.dataset.resultAction === "share") {
-        showToast("결과물 공유 링크가 준비되었습니다.");
+        await copyShareLink(share);
+      }
+
+      if (button.dataset.resultAction === "disqus") {
+        setActiveDisqusShare(share.id);
+      }
+
+      if (button.dataset.resultAction === "close-disqus") {
+        setActiveDisqusShare(null);
       }
     });
 
@@ -3158,7 +3515,11 @@
       const comment = { id: makeId(), author: localUser.name, text };
       share.comments.push(comment);
       input.value = "";
-      renderResults();
+      if (String(share.id) === String(state.activeDisqusShareId)) {
+        refreshShareSummary(share);
+      } else {
+        renderResults();
+      }
       saveState();
       sendRealtime({
         type: "comment",
@@ -3179,9 +3540,11 @@
           title: baseName,
           image: reader.result,
           author: localUser.name,
+          roomKey: currentRoomKey(),
           reactions: 0,
           comments: []
         };
+        share.disqusIdentifier = getShareIdentifier(share);
         state.shares.unshift(share);
         sendRealtime({ type: "share", share });
         resultUpload.value = "";
@@ -3230,6 +3593,8 @@
     applyModalState();
     applyTheme();
     loadState();
+    applyRouteState();
+    loadAppConfig();
   </script>
 </body>
 </html>

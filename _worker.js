@@ -3,6 +3,17 @@ export default {
     const url = new URL(request.url);
     const match = url.pathname.match(/^\/api\/room\/([^/]+)\/ws$/);
 
+    if (url.pathname === "/api/config") {
+      return new Response(JSON.stringify({
+        disqusShortname: env.DISQUS_SHORTNAME || ""
+      }), {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     if (match && request.headers.get("Upgrade") === "websocket") {
       const roomName = decodeURIComponent(match[1]);
       const id = env.ROOMS.idFromName(roomName);
@@ -48,15 +59,20 @@ export class RoomObject {
       return new Response("Expected websocket", { status: 426 });
     }
 
+    const url = new URL(request.url);
+    const match = url.pathname.match(/^\/api\/room\/([^/]+)\/ws$/);
+    const roomName = match ? decodeURIComponent(match[1]) : "lobby";
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     const socketId = crypto.randomUUID();
 
     server.accept();
-    this.sessions.set(socketId, { socket: server, user: null });
+    this.sessions.set(socketId, { socket: server, user: null, room: roomName });
 
     server.send(JSON.stringify({
       type: "init",
+      room: roomName,
       participants: [...this.participants.values()],
       messages: this.messages.slice(-80),
       shares: this.shares,
@@ -210,7 +226,7 @@ export class RoomObject {
     this.sessions.delete(socketId);
     if (session?.user?.id) {
       this.participants.delete(session.user.id);
-      this.broadcast({ type: "presence" });
+      this.broadcast({ type: "presence", room: session.room });
     }
   }
 
