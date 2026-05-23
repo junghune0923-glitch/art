@@ -1,0 +1,2433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>너... 빌런이야?</title>
+  <style>
+    :root {
+      --ink: #000;
+      --paper: #fff;
+      --modal-surface: #f5f5f5;
+      --modal-shadow: rgba(0, 0, 0, 0.2);
+      --muted-ink: #555;
+      --surface: #f7f7f7;
+      --surface-strong: #fff;
+      --accent: #2f7dff;
+      --accent-soft: #dbe8ff;
+      --success: #20a35b;
+      --danger: #d73b2e;
+      --art-filter: none;
+      --scale: 1;
+      --font-heavy: "Arial Black", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      --font-ui: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-heavy);
+      letter-spacing: 0;
+    }
+
+    body.dark-mode {
+      --ink: #f6f6f6;
+      --paper: #101010;
+      --modal-surface: #1b1b1b;
+      --modal-shadow: rgba(255, 255, 255, 0.16);
+      --muted-ink: #cfcfcf;
+      --surface: #171717;
+      --surface-strong: #232323;
+      --accent: #7fb2ff;
+      --accent-soft: #183052;
+      --success: #71d69a;
+      --danger: #ff8378;
+      --art-filter: invert(1) contrast(0.96);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-frame {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--paper);
+      transform: translate(-50%, -50%) scale(var(--scale));
+      transform-origin: center;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .mockup {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .hotspot {
+      position: absolute;
+      z-index: 30;
+      padding: 0;
+      color: transparent;
+      background: transparent;
+      border: 0;
+      outline: 0;
+    }
+
+    .hotspot:focus-visible,
+    .search-field:focus-visible {
+      outline: 5px dashed rgba(0, 0, 0, 0.7);
+      outline-offset: 6px;
+    }
+
+    body.dark-mode .hotspot:focus-visible,
+    body.dark-mode .search-field:focus-visible {
+      outline-color: rgba(255, 255, 255, 0.86);
+    }
+
+    .mockup,
+    .paint-canvas,
+    .result-card img {
+      filter: var(--art-filter);
+      transition: filter 180ms ease;
+    }
+
+    .nav-hotspots {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .nav-hotspots .hotspot {
+      pointer-events: auto;
+    }
+
+    .nav-main {
+      left: 560px;
+      top: 73px;
+      width: 216px;
+      height: 86px;
+      border-radius: 999px;
+    }
+
+    .nav-workspace {
+      left: 852px;
+      top: 73px;
+      width: 218px;
+      height: 86px;
+      border-radius: 999px;
+    }
+
+    .nav-result {
+      left: 1144px;
+      top: 73px;
+      width: 216px;
+      height: 86px;
+      border-radius: 999px;
+    }
+
+    .is-studio .nav-hotspots {
+      display: none;
+    }
+
+    .workspace-controls,
+    .workspace-rows,
+    .studio-controls,
+    .result-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 35;
+      pointer-events: none;
+    }
+
+    .workspace-controls > *,
+    .workspace-rows > *,
+    .studio-controls > *,
+    .result-layer > * {
+      pointer-events: auto;
+    }
+
+    .create-room {
+      left: 383px;
+      top: 256px;
+      width: 340px;
+      height: 86px;
+      border-radius: 18px;
+    }
+
+    .delete-room {
+      left: 749px;
+      top: 256px;
+      width: 340px;
+      height: 86px;
+      border-radius: 18px;
+    }
+
+    .search-field {
+      position: absolute;
+      left: 1184px;
+      top: 264px;
+      z-index: 36;
+      width: 330px;
+      height: 70px;
+      padding: 0 20px;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      outline: 0;
+      font-family: var(--font-heavy);
+      font-size: 32px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .search-field::placeholder {
+      color: transparent;
+    }
+
+    .room-hit {
+      left: 386px;
+      width: 1150px;
+      height: 87px;
+      border-radius: 22px;
+    }
+
+    .room-hit[data-row="0"] { top: 366px; }
+    .room-hit[data-row="1"] { top: 493px; }
+    .room-hit[data-row="2"] { top: 621px; }
+    .room-hit[data-row="3"] { top: 749px; }
+    .room-hit[data-row="4"] { top: 877px; }
+
+    .custom-room-label {
+      position: absolute;
+      left: 456px;
+      z-index: 25;
+      min-width: 190px;
+      padding: 2px 10px;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 31px;
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .custom-room-label[data-row="0"] { top: 397px; }
+    .custom-room-label[data-row="1"] { top: 525px; }
+    .custom-room-label[data-row="2"] { top: 653px; }
+    .custom-room-label[data-row="3"] { top: 781px; }
+    .custom-room-label[data-row="4"] { top: 909px; }
+
+    .room-meta {
+      position: absolute;
+      left: 1166px;
+      z-index: 26;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 270px;
+      padding: 8px 16px;
+      color: var(--ink);
+      background: var(--surface-strong);
+      border: 4px solid var(--ink);
+      border-radius: 999px;
+      font-family: var(--font-ui);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .room-meta::before {
+      width: 13px;
+      height: 13px;
+      background: var(--success);
+      border: 3px solid var(--ink);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .room-meta[data-row="0"] { top: 392px; }
+    .room-meta[data-row="1"] { top: 520px; }
+    .room-meta[data-row="2"] { top: 648px; }
+    .room-meta[data-row="3"] { top: 776px; }
+    .room-meta[data-row="4"] { top: 904px; }
+
+    #homeScreen,
+    #resultScreen {
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--ink) transparent;
+    }
+
+    #homeScreen::-webkit-scrollbar,
+    #resultScreen::-webkit-scrollbar {
+      width: 18px;
+    }
+
+    #homeScreen::-webkit-scrollbar-thumb,
+    #resultScreen::-webkit-scrollbar-thumb {
+      background: var(--ink);
+      border: 4px solid var(--paper);
+      border-radius: 999px;
+    }
+
+    .home-content {
+      position: absolute;
+      top: 760px;
+      left: 286px;
+      z-index: 36;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      width: 1348px;
+      min-height: 760px;
+      padding-bottom: 120px;
+      color: var(--ink);
+      font-family: var(--font-ui);
+    }
+
+    .home-panel,
+    .home-card,
+    .workspace-rows .room-card,
+    .result-upload,
+    .share-card {
+      background: var(--surface-strong);
+      border: 6px solid var(--ink);
+      box-shadow: 7px 7px 0 var(--ink);
+    }
+
+    .home-panel {
+      min-height: 326px;
+      padding: 34px;
+      border-radius: 30px;
+    }
+
+    .home-panel h2,
+    .home-card strong {
+      margin: 0;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .home-panel p {
+      margin: 18px 0 0;
+      color: var(--muted-ink);
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .home-card-stack {
+      display: grid;
+      gap: 20px;
+    }
+
+    .home-card {
+      min-height: 153px;
+      padding: 25px 28px;
+      color: var(--ink);
+      border-radius: 24px;
+      font-family: var(--font-ui);
+      text-align: left;
+    }
+
+    .home-card span {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted-ink);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .workspace-rows {
+      inset: auto;
+      left: 386px;
+      top: 366px;
+      z-index: 36;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      width: 1240px;
+      height: 650px;
+      padding: 0 88px 34px 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      pointer-events: auto;
+      scrollbar-width: auto;
+      scrollbar-color: var(--ink) transparent;
+    }
+
+    .workspace-rows::-webkit-scrollbar {
+      width: 24px;
+    }
+
+    .workspace-rows::-webkit-scrollbar-track {
+      background: transparent;
+      border: 4px solid var(--ink);
+      border-radius: 999px;
+    }
+
+    .workspace-rows::-webkit-scrollbar-thumb {
+      background: var(--ink);
+      border: 5px solid var(--paper);
+      border-radius: 999px;
+    }
+
+    .workspace-rows .room-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 26px;
+      width: 100%;
+      min-height: 88px;
+      padding: 0 34px 0 42px;
+      color: var(--ink);
+      border-radius: 24px;
+      font-family: var(--font-ui);
+      text-align: left;
+      transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    .workspace-rows .room-card:hover {
+      transform: translate(3px, 3px);
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    .workspace-rows .room-card.is-selected {
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .room-card-name {
+      overflow: hidden;
+      font-size: 31px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .room-card-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 214px;
+      padding: 10px 16px;
+      color: inherit;
+      background: var(--surface);
+      border: 4px solid currentColor;
+      border-radius: 999px;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .room-card-meta::before {
+      width: 13px;
+      height: 13px;
+      background: var(--success);
+      border: 3px solid currentColor;
+      border-radius: 50%;
+      content: "";
+    }
+
+    .room-card.is-selected .room-card-meta {
+      background: var(--ink);
+    }
+
+    .selected-room-mark {
+      position: absolute;
+      left: 388px;
+      width: 1146px;
+      height: 83px;
+      z-index: 24;
+      display: none;
+      border: 6px solid var(--ink);
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.08);
+      pointer-events: none;
+    }
+
+    .selected-room-mark.show {
+      display: block;
+    }
+
+    .paint-canvas {
+      position: absolute;
+      left: 358px;
+      top: 0;
+      z-index: 12;
+      width: 1318px;
+      height: 756px;
+      touch-action: none;
+    }
+
+    .note-layer {
+      position: absolute;
+      left: 358px;
+      top: 0;
+      z-index: 15;
+      width: 1318px;
+      height: 756px;
+      pointer-events: none;
+    }
+
+    .note-card {
+      position: absolute;
+      min-width: 170px;
+      min-height: 58px;
+      padding: 13px 16px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 6px solid var(--ink);
+      border-radius: 18px 14px 19px 13px;
+      font-family: var(--font-ui);
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.2;
+      outline: 0;
+      pointer-events: auto;
+      transform: rotate(-0.4deg);
+    }
+
+    .shape-preview {
+      position: absolute;
+      z-index: 18;
+      display: none;
+      border: 6px solid var(--ink);
+      border-radius: 18px 14px 21px 15px;
+      pointer-events: none;
+    }
+
+    .tool-hot {
+      width: 106px;
+      height: 92px;
+      border-radius: 2px;
+    }
+
+    .tool-hot[data-col="0"] { left: 100px; }
+    .tool-hot[data-col="1"] { left: 207px; }
+    .tool-hot[data-row="0"] { top: 70px; }
+    .tool-hot[data-row="1"] { top: 163px; }
+    .tool-hot[data-row="2"] { top: 256px; }
+    .tool-hot[data-row="3"] { top: 349px; }
+    .tool-hot[data-row="4"] { top: 442px; }
+    .tool-hot[data-row="5"] { top: 535px; }
+    .tool-hot[data-row="6"] { top: 628px; }
+
+    .tool-cursor {
+      position: absolute;
+      z-index: 29;
+      display: none;
+      width: 94px;
+      height: 80px;
+      border: 5px solid var(--ink);
+      border-radius: 9px;
+      pointer-events: none;
+    }
+
+    .tool-cursor.show {
+      display: block;
+    }
+
+    .side-hot {
+      left: 1676px;
+      width: 216px;
+      border-radius: 18px;
+    }
+
+    .side-hot[data-action="leave"] { top: 39px; height: 103px; }
+    .side-hot[data-action="save"] { top: 222px; height: 99px; }
+    .side-hot[data-action="share"] { top: 405px; height: 100px; }
+    .side-hot[data-action="export"] { top: 582px; height: 116px; }
+
+    .person-hot {
+      top: 789px;
+      width: 288px;
+      height: 220px;
+      border-radius: 24px;
+    }
+
+    .person-hot[data-person="0"] { left: 84px; }
+    .person-hot[data-person="1"] { left: 435px; }
+    .person-hot[data-person="2"] { left: 786px; }
+    .person-hot[data-person="3"] { left: 1138px; }
+
+    .studio-bottom-cover,
+    .studio-side-cover,
+    .studio-topbar,
+    .collab-panel {
+      display: none;
+    }
+
+    .is-studio .studio-bottom-cover {
+      position: absolute;
+      left: 0;
+      right: 354px;
+      bottom: 0;
+      z-index: 31;
+      display: block;
+      height: 304px;
+      background: var(--paper);
+      border-top: 6px solid var(--ink);
+      pointer-events: none;
+    }
+
+    .is-studio .studio-side-cover {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 32;
+      display: block;
+      width: 354px;
+      background: var(--paper);
+      border-left: 6px solid var(--ink);
+      pointer-events: none;
+    }
+
+    .is-studio .studio-topbar {
+      position: absolute;
+      top: 22px;
+      left: 374px;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      width: 1172px;
+      min-height: 76px;
+      padding: 10px 14px 10px 20px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 6px solid var(--ink);
+      border-radius: 22px;
+      box-shadow: 6px 6px 0 var(--ink);
+      font-family: var(--font-ui);
+    }
+
+    .studio-room-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .studio-room-meta strong {
+      font-size: 26px;
+    }
+
+    .studio-room-meta span {
+      color: var(--muted-ink);
+      font-size: 16px;
+    }
+
+    .studio-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .studio-nav-button,
+    .call-control,
+    .feature-chip,
+    .participant-row,
+    .chat-send {
+      color: var(--ink);
+      background: var(--surface-strong);
+      border: 4px solid var(--ink);
+      font-family: var(--font-ui);
+      font-weight: 900;
+    }
+
+    .studio-nav-button {
+      min-width: 116px;
+      height: 48px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .studio-nav-button[data-action="leave"] {
+      color: var(--paper);
+      background: var(--danger);
+    }
+
+    .studio-nav-button[data-action="share"] {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .is-studio .collab-panel {
+      position: absolute;
+      top: 126px;
+      right: 28px;
+      bottom: 34px;
+      z-index: 70;
+      display: flex;
+      flex-direction: column;
+      width: 318px;
+      padding: 18px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 6px solid var(--ink);
+      border-radius: 26px;
+      box-shadow: 7px 7px 0 var(--ink);
+      font-family: var(--font-ui);
+    }
+
+    .collab-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-weight: 900;
+    }
+
+    .collab-heading strong {
+      font-size: 27px;
+      line-height: 1;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      color: var(--paper);
+      background: var(--success);
+      border: 3px solid var(--ink);
+      border-radius: 999px;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .live-pill::before {
+      width: 8px;
+      height: 8px;
+      background: var(--paper);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .call-status {
+      padding: 13px 14px;
+      color: var(--muted-ink);
+      background: var(--surface-strong);
+      border: 4px solid var(--ink);
+      border-radius: 18px;
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .call-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .call-control {
+      height: 58px;
+      border-radius: 17px;
+      font-size: 15px;
+      line-height: 1.05;
+    }
+
+    .call-control.is-active {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .call-control.is-danger {
+      color: var(--paper);
+      background: var(--danger);
+    }
+
+    .panel-label {
+      margin: 18px 0 9px;
+      color: var(--muted-ink);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .participant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .participant-row {
+      display: grid;
+      grid-template-columns: 16px 1fr auto;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 46px;
+      padding: 0 11px;
+      border-radius: 16px;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    .participant-row.is-muted {
+      color: var(--muted-ink);
+      background: var(--paper);
+    }
+
+    .presence-dot {
+      width: 13px;
+      height: 13px;
+      background: var(--success);
+      border: 3px solid var(--ink);
+      border-radius: 50%;
+    }
+
+    .participant-row.is-muted .presence-dot {
+      background: var(--danger);
+    }
+
+    .participant-state {
+      font-size: 13px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .feature-chip {
+      min-height: 44px;
+      padding: 0 8px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.05;
+    }
+
+    .feature-chip.is-active {
+      background: var(--accent-soft);
+    }
+
+    .team-chat {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-log {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 84px;
+      overflow: hidden;
+    }
+
+    .chat-line {
+      padding: 8px 10px;
+      background: var(--surface-strong);
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .chat-line strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: 1fr 62px;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chat-input {
+      width: 100%;
+      min-width: 0;
+      height: 42px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: var(--surface-strong);
+      border: 4px solid var(--ink);
+      border-radius: 14px;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 900;
+      outline: 0;
+    }
+
+    .chat-input:focus-visible {
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .chat-send {
+      height: 42px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+
+    .is-studio.focus-mode .tool-hot {
+      opacity: 0.24;
+    }
+
+    .is-studio.focus-mode .studio-topbar,
+    .is-studio.focus-mode .collab-panel {
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    .result-card {
+      position: absolute;
+      top: 238px;
+      width: 320px;
+      height: 232px;
+      padding: 14px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 6px solid var(--ink);
+      border-radius: 21px 16px 24px 15px;
+      transform: rotate(-0.5deg);
+    }
+
+    .result-card:nth-child(1) { left: 432px; }
+    .result-card:nth-child(2) { left: 800px; transform: rotate(0.4deg); }
+    .result-card:nth-child(3) { left: 1168px; }
+
+    .result-card img {
+      display: block;
+      width: 100%;
+      height: 154px;
+      object-fit: contain;
+      background: var(--paper);
+      border: 4px solid var(--ink);
+    }
+
+    .result-card span {
+      display: block;
+      margin-top: 8px;
+      overflow: hidden;
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .result-layer {
+      inset: auto;
+      left: 306px;
+      top: 226px;
+      z-index: 36;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      width: 1308px;
+      min-height: 720px;
+      padding: 0 22px 120px 0;
+      overflow: visible;
+      color: var(--ink);
+      font-family: var(--font-ui);
+      pointer-events: auto;
+    }
+
+    .result-upload {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 24px;
+      min-height: 136px;
+      padding: 28px 34px;
+      border-radius: 28px;
+    }
+
+    .result-upload strong {
+      display: block;
+      font-size: 35px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .result-upload span {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted-ink);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .result-upload button,
+    .share-action,
+    .comment-form button {
+      color: var(--paper);
+      background: var(--ink);
+      border: 4px solid var(--ink);
+      border-radius: 999px;
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .result-upload button {
+      min-width: 186px;
+      height: 58px;
+    }
+
+    .share-card {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 28px;
+      min-height: 290px;
+      padding: 24px;
+      border-radius: 30px;
+    }
+
+    .share-card img {
+      width: 100%;
+      height: 236px;
+      object-fit: contain;
+      background: var(--paper);
+      border: 5px solid var(--ink);
+      border-radius: 20px;
+      filter: var(--art-filter);
+    }
+
+    .share-body {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .share-title {
+      margin: 0;
+      overflow: hidden;
+      font-size: 31px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .share-meta {
+      margin-top: 10px;
+      color: var(--muted-ink);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .share-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .share-action {
+      min-width: 116px;
+      height: 43px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: var(--surface-strong);
+    }
+
+    .comment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 18px;
+      max-height: 96px;
+      overflow: hidden;
+    }
+
+    .comment-line {
+      padding: 9px 12px;
+      background: var(--surface);
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .comment-line strong {
+      color: var(--accent);
+      margin-right: 8px;
+    }
+
+    .comment-form {
+      display: grid;
+      grid-template-columns: 1fr 82px;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 16px;
+    }
+
+    .comment-form input {
+      width: 100%;
+      min-width: 0;
+      height: 44px;
+      padding: 0 14px;
+      color: var(--ink);
+      background: var(--surface-strong);
+      border: 4px solid var(--ink);
+      border-radius: 15px;
+      font-family: var(--font-ui);
+      font-size: 17px;
+      font-weight: 900;
+      outline: 0;
+    }
+
+    .comment-form button {
+      height: 44px;
+      font-size: 16px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 100;
+      max-width: min(620px, calc(100vw - 24px));
+      padding: 14px 24px 16px;
+      color: var(--paper);
+      background: var(--ink);
+      border: 4px solid var(--paper);
+      border-radius: 999px;
+      box-shadow: 0 0 0 4px var(--ink);
+      font-family: var(--font-heavy);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 80px);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .bottom-modal {
+      position: absolute;
+      left: 420px;
+      bottom: -288px;
+      z-index: 90;
+      width: 1080px;
+      height: 360px;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--modal-surface);
+      border: 6px solid var(--ink);
+      border-bottom: 0;
+      border-radius: 36px 36px 0 0;
+      box-shadow: 0 -8px 0 var(--ink), 0 -22px 44px var(--modal-shadow);
+      font-family: var(--font-ui);
+      transition: bottom 240ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .bottom-modal.is-open {
+      bottom: 0;
+    }
+
+    .bottom-modal-tab {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 72px;
+      padding: 0;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 6px solid var(--ink);
+      font-size: 31px;
+      font-weight: 900;
+    }
+
+    .bottom-modal-tab::before {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      width: 128px;
+      height: 10px;
+      background: var(--ink);
+      border-radius: 999px;
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .bottom-modal-tab span {
+      margin-top: 18px;
+    }
+
+    .bottom-modal-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 34px;
+      padding: 44px 58px;
+    }
+
+    .bottom-modal-copy {
+      max-width: 500px;
+    }
+
+    .bottom-modal-copy strong {
+      display: block;
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .bottom-modal-copy span {
+      display: block;
+      margin-top: 18px;
+      color: var(--muted-ink);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 390px;
+      height: 118px;
+      padding: 0 28px 0 34px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 6px solid var(--ink);
+      border-radius: 24px;
+      font-size: 28px;
+      font-weight: 900;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .theme-toggle-state {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 94px;
+      height: 54px;
+      color: var(--paper);
+      background: var(--ink);
+      border-radius: 999px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-frame" id="appFrame">
+    <section class="screen active" id="homeScreen" aria-label="메인">
+      <img class="mockup" src="PNG/대지 1.png" alt="" />
+      <div class="home-content">
+        <section class="home-panel">
+          <h2>조별과제 대시보드</h2>
+          <p>활성 방 5개 · 라이브 4명 · 결과물 피드 대기 중</p>
+        </section>
+        <div class="home-card-stack">
+          <button class="home-card" type="button" data-home-screen="workspace">
+            <strong>작업공간</strong>
+            <span>최근 수정 2분 전</span>
+          </button>
+          <button class="home-card" type="button" data-home-screen="result">
+            <strong>결과물</strong>
+            <span>새 댓글 1개</span>
+          </button>
+          <button class="home-card" type="button" data-home-screen="workspace">
+            <strong>라이브 통화</strong>
+            <span>guest 001 · guest 002 접속</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="workspaceScreen" aria-label="작업공간">
+      <img class="mockup" src="PNG/a아트보드 2.png" alt="" />
+      <div class="workspace-controls">
+        <button class="hotspot create-room" type="button" id="createRoom">방 만들기</button>
+        <button class="hotspot delete-room" type="button" id="deleteRoom">방 삭제</button>
+        <input class="search-field" id="roomSearch" type="search" autocomplete="off" placeholder="검색" aria-label="방 검색" />
+      </div>
+      <div class="workspace-rows" id="roomRows">
+        <div class="selected-room-mark" id="selectedRoomMark"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="resultScreen" aria-label="결과물">
+      <img class="mockup" src="PNG/아트보드 3.png" alt="" />
+      <div class="result-layer" id="resultLayer"></div>
+      <input class="sr-only" id="resultUpload" type="file" accept="image/*" />
+    </section>
+
+    <section class="screen" id="studioScreen" aria-label="드로잉 작업공간">
+      <img class="mockup" src="PNG/아트보드 4.png" alt="" id="studioMockup" />
+      <canvas class="paint-canvas" id="paintCanvas" width="1318" height="756"></canvas>
+      <div class="note-layer" id="noteLayer"></div>
+      <div class="shape-preview" id="shapePreview"></div>
+      <div class="tool-cursor" id="toolCursor"></div>
+      <div class="studio-controls" id="studioControls"></div>
+      <div class="studio-bottom-cover" aria-hidden="true"></div>
+      <div class="studio-side-cover" aria-hidden="true"></div>
+      <nav class="studio-topbar" aria-label="작업공간 네비게이션">
+        <div class="studio-room-meta">
+          <strong id="studioRoomTitle">과제방</strong>
+          <span id="studioRoomStatus">팀 작업 · 음성 통화 연결됨</span>
+        </div>
+        <div class="studio-nav-actions">
+          <button class="studio-nav-button" type="button" data-action="leave">나가기</button>
+          <button class="studio-nav-button" type="button" data-action="save">저장</button>
+          <button class="studio-nav-button" type="button" data-action="share">공유</button>
+          <button class="studio-nav-button" type="button" data-action="export">내보내기</button>
+        </div>
+      </nav>
+      <aside class="collab-panel" id="collabPanel" aria-label="팀 통화 패널">
+        <div class="collab-heading">
+          <strong>팀 통화</strong>
+          <span class="live-pill">LIVE</span>
+        </div>
+        <div class="call-status" id="callStatus"></div>
+        <div class="call-controls" aria-label="통화 컨트롤">
+          <button class="call-control" id="micToggle" type="button" data-call="mic"></button>
+          <button class="call-control" id="cameraToggle" type="button" data-call="camera"></button>
+          <button class="call-control" id="screenToggle" type="button" data-call="screen"></button>
+        </div>
+
+        <div class="panel-label">참여자</div>
+        <div class="participant-list" id="participantList"></div>
+
+        <div class="panel-label">협업 도구</div>
+        <div class="feature-grid">
+          <button class="feature-chip" type="button" data-feature="comment">댓글 핀</button>
+          <button class="feature-chip" type="button" data-feature="version">버전 저장</button>
+          <button class="feature-chip" type="button" data-feature="focus">집중 모드</button>
+          <button class="feature-chip" type="button" data-feature="sync">동기화</button>
+        </div>
+
+        <div class="panel-label">채팅</div>
+        <div class="team-chat">
+          <div class="chat-log" id="chatLog"></div>
+          <form class="chat-form" id="chatForm">
+            <input class="chat-input" id="chatInput" type="text" autocomplete="off" maxlength="42" placeholder="메시지" aria-label="팀 채팅 메시지" />
+            <button class="chat-send" type="submit">전송</button>
+          </form>
+        </div>
+      </aside>
+    </section>
+
+    <div class="nav-hotspots" aria-label="주요 화면 이동">
+      <button class="hotspot nav-main" type="button" data-screen="home">메인</button>
+      <button class="hotspot nav-workspace" type="button" data-screen="workspace">작업공간</button>
+      <button class="hotspot nav-result" type="button" data-screen="result">결과물</button>
+    </div>
+
+    <aside class="bottom-modal" id="bottomModal" aria-label="설정 모달" aria-expanded="false">
+      <button class="bottom-modal-tab" id="bottomModalTab" type="button" aria-controls="bottomModalContent" aria-expanded="false">
+        <span>설정</span>
+      </button>
+      <div class="bottom-modal-content" id="bottomModalContent">
+        <div class="bottom-modal-copy">
+          <strong>화면 설정</strong>
+          <span>표시 모드</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+          <span>다크모드</span>
+          <span class="theme-toggle-state" id="themeToggleState">꺼짐</span>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <p class="sr-only" id="statusText"></p>
+
+  <script>
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+    const DESIGN = { width: 1920, height: 1080 };
+    const PAINT = { x: 358, y: 0, width: 1318, height: 756 };
+    const ROW_TOPS = [366, 493, 621, 749, 877];
+    const DEFAULT_ROOM = "000의 과제방";
+    const STORAGE_KEY = "villain-page-state-v2";
+
+    const frame = $("#appFrame");
+    const toast = $("#toast");
+    const statusText = $("#statusText");
+    const paintCanvas = $("#paintCanvas");
+    const paintCtx = paintCanvas.getContext("2d");
+    const noteLayer = $("#noteLayer");
+    const shapePreview = $("#shapePreview");
+    const toolCursor = $("#toolCursor");
+    const studioControls = $("#studioControls");
+    const roomRows = $("#roomRows");
+    const selectedRoomMark = $("#selectedRoomMark");
+    const roomSearch = $("#roomSearch");
+    const resultLayer = $("#resultLayer");
+    const resultUpload = $("#resultUpload");
+    const studioMockup = $("#studioMockup");
+    const bottomModal = $("#bottomModal");
+    const bottomModalTab = $("#bottomModalTab");
+    const themeToggle = $("#themeToggle");
+    const themeToggleState = $("#themeToggleState");
+    const studioRoomTitle = $("#studioRoomTitle");
+    const studioRoomStatus = $("#studioRoomStatus");
+    const collabPanel = $("#collabPanel");
+    const callStatus = $("#callStatus");
+    const micToggle = $("#micToggle");
+    const cameraToggle = $("#cameraToggle");
+    const screenToggle = $("#screenToggle");
+    const participantList = $("#participantList");
+    const chatLog = $("#chatLog");
+    const chatForm = $("#chatForm");
+    const chatInput = $("#chatInput");
+
+    const state = {
+      screen: "home",
+      activeTool: "brush",
+      modalOpen: false,
+      darkMode: false,
+      micMuted: false,
+      cameraOn: false,
+      screenSharing: false,
+      commentMode: false,
+      focusMode: false,
+      syncReady: true,
+      versionCount: 0,
+      selectedRoomId: null,
+      rooms: Array.from({ length: 5 }, (_, index) => ({
+        id: index + 1,
+        name: DEFAULT_ROOM,
+        custom: false
+      })),
+      shares: [],
+      notes: [],
+      chatMessages: [
+        { id: 1, author: "시스템", text: "음성 채널이 열렸습니다." },
+        { id: 2, author: "guest 002", text: "캔버스 같이 보고 있어요." }
+      ],
+      people: [false, false, false, false],
+      drawing: false,
+      startPoint: null,
+      lastPoint: null,
+      undoStack: []
+    };
+
+    const TEAM_MEMBERS = [
+      { name: "guest 001", role: "진행" },
+      { name: "guest 002", role: "편집" },
+      { name: "guest 003", role: "댓글" },
+      { name: "guest 004", role: "보기" }
+    ];
+
+    const fitFrame = () => {
+      const scale = Math.min(window.innerWidth / DESIGN.width, window.innerHeight / DESIGN.height);
+      frame.style.setProperty("--scale", String(scale));
+    };
+
+    const showToast = (message) => {
+      toast.textContent = message;
+      statusText.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
+    };
+
+    const screenMap = {
+      home: $("#homeScreen"),
+      workspace: $("#workspaceScreen"),
+      result: $("#resultScreen"),
+      studio: $("#studioScreen")
+    };
+
+    const setScreen = (screen) => {
+      state.screen = screen;
+      Object.entries(screenMap).forEach(([name, element]) => {
+        element.classList.toggle("active", name === screen);
+      });
+      frame.classList.toggle("is-studio", screen === "studio");
+      if (screen === "studio") {
+        requestAnimationFrame(sizePaintCanvas);
+        renderCollaborationPanel();
+      }
+      saveState();
+    };
+
+    const sizePaintCanvas = () => {
+      const previous = paintCanvas.width ? paintCanvas.toDataURL("image/png") : null;
+      const dpr = window.devicePixelRatio || 1;
+      paintCanvas.width = Math.round(PAINT.width * dpr);
+      paintCanvas.height = Math.round(PAINT.height * dpr);
+      paintCanvas.style.width = `${PAINT.width}px`;
+      paintCanvas.style.height = `${PAINT.height}px`;
+      paintCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      paintCtx.lineCap = "round";
+      paintCtx.lineJoin = "round";
+
+      if (previous) {
+        const image = new Image();
+        image.onload = () => {
+          paintCtx.clearRect(0, 0, PAINT.width, PAINT.height);
+          paintCtx.drawImage(image, 0, 0, PAINT.width, PAINT.height);
+        };
+        image.src = previous;
+      }
+    };
+
+    const toPaintPoint = (event) => {
+      const rect = paintCanvas.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(PAINT.width, (event.clientX - rect.left) * (PAINT.width / rect.width))),
+        y: Math.max(0, Math.min(PAINT.height, (event.clientY - rect.top) * (PAINT.height / rect.height)))
+      };
+    };
+
+    const pushUndo = () => {
+      state.undoStack.push(paintCanvas.toDataURL("image/png"));
+      if (state.undoStack.length > 20) {
+        state.undoStack.shift();
+      }
+    };
+
+    const restoreCanvas = (dataUrl) => {
+      if (!dataUrl) return;
+      const image = new Image();
+      image.onload = () => {
+        paintCtx.clearRect(0, 0, PAINT.width, PAINT.height);
+        paintCtx.drawImage(image, 0, 0, PAINT.width, PAINT.height);
+      };
+      image.src = dataUrl;
+    };
+
+    const drawSegment = (from, to) => {
+      paintCtx.save();
+      if (state.activeTool === "eraser") {
+        paintCtx.globalCompositeOperation = "destination-out";
+        paintCtx.lineWidth = 36;
+      } else {
+        paintCtx.globalCompositeOperation = "source-over";
+        paintCtx.strokeStyle = "#000";
+        paintCtx.lineWidth = state.activeTool === "line" ? 7 : 8;
+      }
+      paintCtx.beginPath();
+      paintCtx.moveTo(from.x, from.y);
+      paintCtx.lineTo(to.x, to.y);
+      paintCtx.stroke();
+      paintCtx.restore();
+    };
+
+    const drawRoughRect = (start, end) => {
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      const width = Math.abs(end.x - start.x);
+      const height = Math.abs(end.y - start.y);
+      if (width < 10 || height < 10) return;
+
+      paintCtx.save();
+      paintCtx.strokeStyle = "#000";
+      paintCtx.lineWidth = 6;
+      for (let i = 0; i < 3; i += 1) {
+        paintCtx.strokeRect(x + i * 2 - 2, y - i + 2, width + i, height - i);
+      }
+      paintCtx.restore();
+    };
+
+    const setShapePreview = (start, end) => {
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      const width = Math.abs(end.x - start.x);
+      const height = Math.abs(end.y - start.y);
+      Object.assign(shapePreview.style, {
+        display: "block",
+        left: `${PAINT.x + x}px`,
+        top: `${PAINT.y + y}px`,
+        width: `${width}px`,
+        height: `${height}px`
+      });
+    };
+
+    const applyModalState = () => {
+      bottomModal.classList.toggle("is-open", state.modalOpen);
+      bottomModal.setAttribute("aria-expanded", String(state.modalOpen));
+      bottomModalTab.setAttribute("aria-expanded", String(state.modalOpen));
+    };
+
+    const setModalOpen = (open) => {
+      state.modalOpen = open;
+      applyModalState();
+      saveState();
+    };
+
+    const applyTheme = () => {
+      document.body.classList.toggle("dark-mode", state.darkMode);
+      themeToggle.setAttribute("aria-pressed", String(state.darkMode));
+      themeToggleState.textContent = state.darkMode ? "켜짐" : "꺼짐";
+    };
+
+    const setDarkMode = (enabled) => {
+      state.darkMode = enabled;
+      applyTheme();
+      saveState();
+    };
+
+    const currentRoomName = () => {
+      const room = state.rooms.find((item) => item.id === state.selectedRoomId);
+      return room?.name || DEFAULT_ROOM;
+    };
+
+    const trimChatMessages = () => {
+      state.chatMessages = state.chatMessages.slice(-5);
+    };
+
+    const addTeamMessage = (author, text) => {
+      state.chatMessages.push({
+        id: Date.now() + Math.random(),
+        author,
+        text
+      });
+      trimChatMessages();
+      renderCollaborationPanel();
+      saveState();
+    };
+
+    const applyCollabMode = () => {
+      frame.classList.toggle("focus-mode", state.focusMode);
+    };
+
+    const renderCollaborationPanel = () => {
+      const mutedCount = state.people.filter(Boolean).length + (state.micMuted ? 1 : 0);
+      studioRoomTitle.textContent = currentRoomName();
+      studioRoomStatus.textContent = state.screenSharing
+        ? "팀 작업 · 화면 공유 중"
+        : `팀 작업 · 버전 ${state.versionCount}`;
+      callStatus.textContent = `${TEAM_MEMBERS.length}명 접속 · ${mutedCount}명 음소거 · ${state.syncReady ? "동기화 완료" : "동기화 대기"}`;
+
+      micToggle.textContent = state.micMuted ? "마이크 꺼짐" : "마이크 켜짐";
+      micToggle.classList.toggle("is-danger", state.micMuted);
+      micToggle.setAttribute("aria-pressed", String(state.micMuted));
+
+      cameraToggle.textContent = state.cameraOn ? "카메라 켜짐" : "카메라 꺼짐";
+      cameraToggle.classList.toggle("is-active", state.cameraOn);
+      cameraToggle.setAttribute("aria-pressed", String(state.cameraOn));
+
+      screenToggle.textContent = state.screenSharing ? "공유 중" : "화면 공유";
+      screenToggle.classList.toggle("is-active", state.screenSharing);
+      screenToggle.setAttribute("aria-pressed", String(state.screenSharing));
+
+      participantList.innerHTML = "";
+      TEAM_MEMBERS.forEach((member, index) => {
+        const button = document.createElement("button");
+        const muted = Boolean(state.people[index]);
+        button.className = `participant-row${muted ? " is-muted" : ""}`;
+        button.type = "button";
+        button.dataset.personToggle = String(index);
+
+        const dot = document.createElement("span");
+        dot.className = "presence-dot";
+        dot.setAttribute("aria-hidden", "true");
+
+        const name = document.createElement("span");
+        name.textContent = `${member.name} · ${member.role}`;
+
+        const status = document.createElement("span");
+        status.className = "participant-state";
+        status.textContent = muted ? "음소거" : "통화중";
+
+        button.append(dot, name, status);
+        participantList.appendChild(button);
+      });
+
+      $$(".feature-chip", collabPanel).forEach((button) => {
+        const feature = button.dataset.feature;
+        button.classList.toggle("is-active", (
+          (feature === "comment" && state.commentMode) ||
+          (feature === "focus" && state.focusMode) ||
+          (feature === "sync" && state.syncReady)
+        ));
+        if (feature === "version") {
+          button.textContent = state.versionCount ? `버전 ${state.versionCount}` : "버전 저장";
+        }
+        if (feature === "sync") {
+          button.textContent = state.syncReady ? "동기화 완료" : "동기화";
+        }
+      });
+
+      chatLog.innerHTML = "";
+      state.chatMessages.slice(-4).forEach((message) => {
+        const line = document.createElement("div");
+        line.className = "chat-line";
+        const author = document.createElement("strong");
+        author.textContent = message.author;
+        const text = document.createElement("span");
+        text.textContent = message.text;
+        line.append(author, text);
+        chatLog.appendChild(line);
+      });
+
+      applyCollabMode();
+    };
+
+    const createNote = (point, text = "메모") => {
+      const note = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        x: Math.max(0, Math.min(point.x, PAINT.width - 210)),
+        y: Math.max(0, Math.min(point.y, PAINT.height - 90)),
+        text
+      };
+      state.notes.push(note);
+      renderNotes();
+      saveState();
+      return note;
+    };
+
+    const renderNotes = () => {
+      noteLayer.innerHTML = state.notes.map((note) => `
+        <div class="note-card" contenteditable="true" spellcheck="false" data-note="${note.id}" style="left:${note.x}px;top:${note.y}px">${note.text}</div>
+      `).join("");
+
+      $$(".note-card", noteLayer).forEach((element) => {
+        element.addEventListener("input", () => {
+          const note = state.notes.find((item) => item.id === element.dataset.note);
+          if (note) {
+            note.text = element.textContent.trim() || "메모";
+            saveState();
+          }
+        });
+        element.addEventListener("pointerdown", (event) => event.stopPropagation());
+      });
+    };
+
+    const renderRooms = () => {
+      const keyword = roomSearch.value.trim().toLowerCase();
+      const visibleRooms = state.rooms.filter((room) => room.name.toLowerCase().includes(keyword));
+      roomRows.innerHTML = "";
+
+      visibleRooms.forEach((room, index) => {
+        const button = document.createElement("button");
+        button.className = `room-card${room.id === state.selectedRoomId ? " is-selected" : ""}`;
+        button.type = "button";
+        button.dataset.room = String(room.id);
+
+        const name = document.createElement("span");
+        name.className = "room-card-name";
+        name.textContent = room.name;
+
+        const meta = document.createElement("span");
+        meta.className = "room-card-meta";
+        meta.textContent = `${TEAM_MEMBERS.length}명 · 통화 가능`;
+
+        button.append(name, meta);
+        button.addEventListener("click", () => {
+          state.selectedRoomId = room.id;
+          renderRooms();
+          saveState();
+          showToast("방 선택됨. 한 번 더 누르면 입장합니다.");
+        });
+        button.addEventListener("dblclick", () => enterSelectedRoom(room.id));
+        roomRows.appendChild(button);
+      });
+    };
+
+    const renderRoomSelection = () => {
+      renderRooms();
+    };
+
+    const enterSelectedRoom = (roomId = state.selectedRoomId) => {
+      if (!roomId) {
+        showToast("먼저 방을 선택해 주세요.");
+        return;
+      }
+      state.selectedRoomId = roomId;
+      setScreen("studio");
+      showToast("작업공간 입장");
+    };
+
+    $("#createRoom").addEventListener("click", () => {
+      const nextNumber = String(state.rooms.length + 1).padStart(3, "0");
+      const room = {
+        id: Date.now(),
+        name: `${nextNumber}의 과제방`,
+        custom: true
+      };
+      state.rooms.unshift(room);
+      state.selectedRoomId = room.id;
+      roomSearch.value = "";
+      renderRooms();
+      roomRows.scrollTop = 0;
+      saveState();
+      showToast("새 방 생성. 방 줄을 더블클릭하면 입장합니다.");
+    });
+
+    $("#deleteRoom").addEventListener("click", () => {
+      if (!state.selectedRoomId) {
+        showToast("삭제할 방을 먼저 선택하세요.");
+        return;
+      }
+      state.rooms = state.rooms.filter((room) => room.id !== state.selectedRoomId);
+      state.selectedRoomId = state.rooms[0]?.id || null;
+      renderRooms();
+      saveState();
+      showToast("방 삭제 완료");
+    });
+
+    roomSearch.addEventListener("input", renderRooms);
+
+    const toolButtons = [
+      ["select", 0, 0],
+      ["shape", 1, 0],
+      ["lasso", 0, 1],
+      ["spark", 1, 1],
+      ["hand", 0, 2],
+      ["zoom", 1, 2],
+      ["crop", 0, 3],
+      ["text", 1, 3],
+      ["fill", 0, 4],
+      ["pattern", 1, 4],
+      ["line", 0, 5],
+      ["arrow", 1, 5],
+      ["eraser", 0, 6],
+      ["brush", 1, 6]
+    ];
+
+    const setTool = (tool, silent = false) => {
+      state.activeTool = tool;
+      toolCursor.classList.remove("show");
+      paintCanvas.style.cursor = ["brush", "eraser", "shape", "line", "text", "arrow"].includes(tool) ? "crosshair" : "default";
+      if (!silent) {
+        showToast(`${toolLabel(tool)} 선택`);
+      }
+    };
+
+    const toolLabel = (tool) => ({
+      select: "선택",
+      shape: "사각형",
+      lasso: "올가미",
+      spark: "효과",
+      hand: "이동",
+      zoom: "확대",
+      crop: "자르기",
+      text: "텍스트",
+      fill: "채우기",
+      pattern: "패턴",
+      line: "선",
+      arrow: "화살표",
+      eraser: "지우개",
+      brush: "펜"
+    }[tool] || tool);
+
+    const renderStudioControls = () => {
+      studioControls.innerHTML = "";
+      toolButtons.forEach(([tool, col, row]) => {
+        const button = document.createElement("button");
+        button.className = "hotspot tool-hot";
+        button.type = "button";
+        button.dataset.tool = tool;
+        button.dataset.col = String(col);
+        button.dataset.row = String(row);
+        button.textContent = toolLabel(tool);
+        button.addEventListener("click", () => setTool(tool));
+        studioControls.appendChild(button);
+      });
+    };
+
+    const handleSideAction = async (action) => {
+      if (action === "leave") {
+        setScreen("workspace");
+        showToast("작업공간 목록으로 이동");
+      }
+      if (action === "save") {
+        saveState(true);
+        showToast("현재 작업 저장 완료");
+      }
+      if (action === "share") {
+        const image = await composeStudioImage();
+        state.shares.unshift({
+          id: Date.now(),
+          title: `결과물 ${String(state.shares.length + 1).padStart(2, "0")}`,
+          image,
+          author: currentRoomName(),
+          reactions: 0,
+          comments: []
+        });
+        renderResults();
+        setScreen("result");
+        saveState(true);
+        showToast("결과물 탭에 공유 완료");
+      }
+      if (action === "export") {
+        const link = document.createElement("a");
+        link.href = await composeStudioImage();
+        link.download = "villain-work.png";
+        link.click();
+        showToast("PNG 내보내기 완료");
+      }
+    };
+
+    paintCanvas.addEventListener("pointerdown", (event) => {
+      if (state.screen !== "studio") return;
+      const point = toPaintPoint(event);
+
+      if (state.activeTool === "text") {
+        createNote(point);
+        showToast("메모 추가");
+        return;
+      }
+
+      if (!["brush", "eraser", "shape", "line", "arrow"].includes(state.activeTool)) {
+        return;
+      }
+
+      pushUndo();
+      state.drawing = true;
+      state.startPoint = point;
+      state.lastPoint = point;
+      paintCanvas.setPointerCapture(event.pointerId);
+
+      if (state.activeTool === "shape") {
+        setShapePreview(point, point);
+      }
+    });
+
+    paintCanvas.addEventListener("pointermove", (event) => {
+      if (!state.drawing || !state.lastPoint) return;
+      const point = toPaintPoint(event);
+
+      if (state.activeTool === "shape") {
+        setShapePreview(state.startPoint, point);
+        return;
+      }
+
+      if (state.activeTool === "line" || state.activeTool === "arrow") {
+        return;
+      }
+
+      drawSegment(state.lastPoint, point);
+      state.lastPoint = point;
+    });
+
+    const finishDrawing = (event) => {
+      if (!state.drawing || !state.startPoint) return;
+      const point = toPaintPoint(event);
+
+      if (state.activeTool === "shape") {
+        drawRoughRect(state.startPoint, point);
+        shapePreview.style.display = "none";
+      }
+
+      if (state.activeTool === "line" || state.activeTool === "arrow") {
+        drawSegment(state.startPoint, point);
+        if (state.activeTool === "arrow") {
+          drawArrowHead(state.startPoint, point);
+        }
+      }
+
+      state.drawing = false;
+      state.startPoint = null;
+      state.lastPoint = null;
+      saveState();
+    };
+
+    paintCanvas.addEventListener("pointerup", finishDrawing);
+    paintCanvas.addEventListener("pointercancel", finishDrawing);
+
+    const drawArrowHead = (from, to) => {
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const size = 24;
+      paintCtx.save();
+      paintCtx.strokeStyle = "#000";
+      paintCtx.lineWidth = 7;
+      paintCtx.beginPath();
+      paintCtx.moveTo(to.x, to.y);
+      paintCtx.lineTo(to.x - size * Math.cos(angle - Math.PI / 6), to.y - size * Math.sin(angle - Math.PI / 6));
+      paintCtx.moveTo(to.x, to.y);
+      paintCtx.lineTo(to.x - size * Math.cos(angle + Math.PI / 6), to.y - size * Math.sin(angle + Math.PI / 6));
+      paintCtx.stroke();
+      paintCtx.restore();
+    };
+
+    const composeStudioImage = async () => {
+      const output = document.createElement("canvas");
+      output.width = DESIGN.width;
+      output.height = DESIGN.height;
+      const outputCtx = output.getContext("2d");
+      await drawImageElement(outputCtx, studioMockup, 0, 0, DESIGN.width, DESIGN.height);
+      outputCtx.drawImage(paintCanvas, PAINT.x, PAINT.y, PAINT.width, PAINT.height);
+      drawNotesForExport(outputCtx);
+      return output.toDataURL("image/png");
+    };
+
+    const drawImageElement = (ctx, image, x, y, width, height) => new Promise((resolve) => {
+      if (image.complete) {
+        ctx.drawImage(image, x, y, width, height);
+        resolve();
+        return;
+      }
+      image.onload = () => {
+        ctx.drawImage(image, x, y, width, height);
+        resolve();
+      };
+    });
+
+    const drawNotesForExport = (ctx) => {
+      ctx.save();
+      ctx.font = "900 26px Malgun Gothic, sans-serif";
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#000";
+      ctx.fillStyle = "#fff";
+      state.notes.forEach((note) => {
+        const x = PAINT.x + note.x;
+        const y = PAINT.y + note.y;
+        const text = note.text || "메모";
+        const width = Math.max(170, ctx.measureText(text).width + 34);
+        const height = 62;
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeRect(x, y, width, height);
+        ctx.fillStyle = "#000";
+        ctx.fillText(text, x + 16, y + 40);
+        ctx.fillStyle = "#fff";
+      });
+      ctx.restore();
+    };
+
+    const ensureShareMeta = (share, index) => {
+      share.id = share.id || Date.now() + index;
+      share.title = share.title || `결과물 ${String(index + 1).padStart(2, "0")}`;
+      share.author = share.author || "조별과제 팀";
+      share.reactions = Number.isFinite(share.reactions) ? share.reactions : 0;
+      share.comments = Array.isArray(share.comments) ? share.comments : [];
+      return share;
+    };
+
+    const renderResults = () => {
+      resultLayer.innerHTML = "";
+
+      const upload = document.createElement("section");
+      upload.className = "result-upload";
+
+      const uploadCopy = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = "완성본 공유";
+      const description = document.createElement("span");
+      description.textContent = "팀 완성본과 피드백 모음";
+      uploadCopy.append(title, description);
+
+      const uploadButton = document.createElement("button");
+      uploadButton.type = "button";
+      uploadButton.dataset.resultUpload = "true";
+      uploadButton.textContent = "결과물 올리기";
+      upload.append(uploadCopy, uploadButton);
+      resultLayer.appendChild(upload);
+
+      if (!state.shares.length) {
+        const empty = document.createElement("article");
+        empty.className = "share-card";
+        const placeholder = document.createElement("div");
+        placeholder.className = "result-upload";
+        placeholder.innerHTML = "<strong>공유 대기 중</strong><span>새 완성본 없음</span>";
+        empty.appendChild(placeholder);
+        resultLayer.appendChild(empty);
+        return;
+      }
+
+      state.shares.forEach((rawShare, index) => {
+        const share = ensureShareMeta(rawShare, index);
+        const card = document.createElement("article");
+        card.className = "share-card";
+
+        const image = document.createElement("img");
+        image.src = share.image;
+        image.alt = share.title;
+
+        const body = document.createElement("div");
+        body.className = "share-body";
+
+        const heading = document.createElement("h3");
+        heading.className = "share-title";
+        heading.textContent = share.title;
+
+        const meta = document.createElement("div");
+        meta.className = "share-meta";
+        meta.textContent = `${share.author} · 댓글 ${share.comments.length}개`;
+
+        const actions = document.createElement("div");
+        actions.className = "share-actions";
+
+        const react = document.createElement("button");
+        react.className = "share-action";
+        react.type = "button";
+        react.dataset.resultAction = "react";
+        react.dataset.result = String(share.id);
+        react.textContent = `반응 ${share.reactions}`;
+
+        const shareButton = document.createElement("button");
+        shareButton.className = "share-action";
+        shareButton.type = "button";
+        shareButton.dataset.resultAction = "share";
+        shareButton.dataset.result = String(share.id);
+        shareButton.textContent = "공유";
+
+        actions.append(react, shareButton);
+
+        const comments = document.createElement("div");
+        comments.className = "comment-list";
+        share.comments.slice(-3).forEach((comment) => {
+          const line = document.createElement("div");
+          line.className = "comment-line";
+          const author = document.createElement("strong");
+          author.textContent = comment.author;
+          const text = document.createElement("span");
+          text.textContent = comment.text;
+          line.append(author, text);
+          comments.appendChild(line);
+        });
+
+        const form = document.createElement("form");
+        form.className = "comment-form";
+        form.dataset.resultComment = String(share.id);
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 46;
+        input.placeholder = "댓글";
+        input.setAttribute("aria-label", `${share.title} 댓글`);
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.textContent = "등록";
+        form.append(input, submit);
+
+        body.append(heading, meta, actions, comments, form);
+        card.append(image, body);
+        resultLayer.appendChild(card);
+      });
+    };
+
+    const saveState = (includeCanvas = false) => {
+      const payload = {
+        screen: state.screen,
+        modalOpen: state.modalOpen,
+        darkMode: state.darkMode,
+        micMuted: state.micMuted,
+        cameraOn: state.cameraOn,
+        screenSharing: state.screenSharing,
+        commentMode: state.commentMode,
+        focusMode: state.focusMode,
+        syncReady: state.syncReady,
+        versionCount: state.versionCount,
+        selectedRoomId: state.selectedRoomId,
+        rooms: state.rooms,
+        shares: state.shares,
+        notes: state.notes,
+        chatMessages: state.chatMessages,
+        people: state.people,
+        canvas: includeCanvas ? paintCanvas.toDataURL("image/png") : undefined
+      };
+      if (!includeCanvas) {
+        const old = loadRawState();
+        payload.canvas = old?.canvas;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    };
+
+    const loadRawState = () => {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      } catch {
+        return null;
+      }
+    };
+
+    const loadState = () => {
+      const saved = loadRawState();
+      if (!saved) return;
+      state.modalOpen = Boolean(saved.modalOpen);
+      state.darkMode = Boolean(saved.darkMode);
+      state.micMuted = Boolean(saved.micMuted);
+      state.cameraOn = Boolean(saved.cameraOn);
+      state.screenSharing = Boolean(saved.screenSharing);
+      state.commentMode = Boolean(saved.commentMode);
+      state.focusMode = Boolean(saved.focusMode);
+      state.syncReady = saved.syncReady !== false;
+      state.versionCount = Number.isFinite(saved.versionCount) ? saved.versionCount : 0;
+      state.selectedRoomId = saved.selectedRoomId || state.selectedRoomId;
+      state.rooms = Array.isArray(saved.rooms) && saved.rooms.length ? saved.rooms : state.rooms;
+      state.shares = Array.isArray(saved.shares) ? saved.shares : [];
+      state.notes = Array.isArray(saved.notes) ? saved.notes : [];
+      state.chatMessages = Array.isArray(saved.chatMessages) && saved.chatMessages.length ? saved.chatMessages : state.chatMessages;
+      state.people = Array.isArray(saved.people) ? saved.people : state.people;
+      applyModalState();
+      applyTheme();
+      renderRooms();
+      renderNotes();
+      renderResults();
+      renderCollaborationPanel();
+      requestAnimationFrame(() => restoreCanvas(saved.canvas));
+    };
+
+    bottomModal.addEventListener("click", () => {
+      if (!state.modalOpen) {
+        setModalOpen(true);
+      }
+    });
+
+    bottomModalTab.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setModalOpen(!state.modalOpen);
+    });
+
+    themeToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setDarkMode(!state.darkMode);
+    });
+
+    $$(".studio-nav-button").forEach((button) => {
+      button.addEventListener("click", () => handleSideAction(button.dataset.action));
+    });
+
+    collabPanel.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button || !collabPanel.contains(button)) return;
+
+      if (button.dataset.call === "mic") {
+        state.micMuted = !state.micMuted;
+        addTeamMessage("나", state.micMuted ? "마이크를 껐습니다." : "마이크를 켰습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.call === "camera") {
+        state.cameraOn = !state.cameraOn;
+        addTeamMessage("나", state.cameraOn ? "카메라를 켰습니다." : "카메라를 껐습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.call === "screen") {
+        state.screenSharing = !state.screenSharing;
+        addTeamMessage("나", state.screenSharing ? "화면 공유를 시작했습니다." : "화면 공유를 종료했습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.personToggle !== undefined) {
+        const index = Number(button.dataset.personToggle);
+        state.people[index] = !state.people[index];
+        addTeamMessage(TEAM_MEMBERS[index].name, state.people[index] ? "음소거 상태입니다." : "다시 통화에 참여했습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.feature === "comment") {
+        state.commentMode = !state.commentMode;
+        if (state.commentMode) {
+          setTool("text", true);
+        }
+        addTeamMessage("나", state.commentMode ? "댓글 핀 모드를 켰습니다." : "댓글 핀 모드를 껐습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.feature === "version") {
+        state.versionCount += 1;
+        saveState(true);
+        addTeamMessage("시스템", `버전 ${state.versionCount} 저장 완료`);
+        renderCollaborationPanel();
+      }
+
+      if (button.dataset.feature === "focus") {
+        state.focusMode = !state.focusMode;
+        addTeamMessage("나", state.focusMode ? "집중 모드를 켰습니다." : "집중 모드를 껐습니다.");
+        renderCollaborationPanel();
+        saveState();
+      }
+
+      if (button.dataset.feature === "sync") {
+        state.syncReady = false;
+        renderCollaborationPanel();
+        setTimeout(() => {
+          state.syncReady = true;
+          addTeamMessage("시스템", "팀 변경사항 동기화 완료");
+          renderCollaborationPanel();
+          saveState();
+        }, 650);
+      }
+    });
+
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) return;
+      chatInput.value = "";
+      addTeamMessage("나", message);
+    });
+
+    resultLayer.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button || !resultLayer.contains(button)) return;
+
+      if (button.dataset.resultUpload) {
+        resultUpload.click();
+        return;
+      }
+
+      const share = state.shares.find((item) => String(item.id) === button.dataset.result);
+      if (!share) return;
+
+      if (button.dataset.resultAction === "react") {
+        share.reactions = (share.reactions || 0) + 1;
+        renderResults();
+        saveState();
+      }
+
+      if (button.dataset.resultAction === "share") {
+        showToast("결과물 공유 링크가 준비되었습니다.");
+      }
+    });
+
+    resultLayer.addEventListener("submit", (event) => {
+      const form = event.target.closest(".comment-form");
+      if (!form) return;
+      event.preventDefault();
+
+      const share = state.shares.find((item) => String(item.id) === form.dataset.resultComment);
+      const input = $("input", form);
+      const text = input.value.trim();
+      if (!share || !text) return;
+
+      share.comments = Array.isArray(share.comments) ? share.comments : [];
+      share.comments.push({ author: "나", text });
+      input.value = "";
+      renderResults();
+      saveState();
+    });
+
+    resultUpload.addEventListener("change", () => {
+      const file = resultUpload.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const baseName = file.name.replace(/\.[^.]+$/, "") || "업로드 결과물";
+        state.shares.unshift({
+          id: Date.now(),
+          title: baseName,
+          image: reader.result,
+          author: "나",
+          reactions: 0,
+          comments: []
+        });
+        resultUpload.value = "";
+        renderResults();
+        saveState(true);
+        showToast("결과물 업로드 완료");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    $$(".home-card").forEach((button) => {
+      button.addEventListener("click", () => setScreen(button.dataset.homeScreen));
+    });
+
+    $$(".nav-hotspots [data-screen]").forEach((button) => {
+      button.addEventListener("click", () => setScreen(button.dataset.screen));
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        const previous = state.undoStack.pop();
+        if (previous) {
+          restoreCanvas(previous);
+          showToast("되돌리기");
+        }
+      }
+
+      if (event.key === "Enter" && state.screen === "workspace") {
+        enterSelectedRoom();
+      }
+
+      if (event.key === "Escape" && state.screen === "studio") {
+        setScreen("workspace");
+      }
+    });
+
+    window.addEventListener("resize", fitFrame);
+
+    fitFrame();
+    sizePaintCanvas();
+    renderStudioControls();
+    renderRooms();
+    renderCollaborationPanel();
+    setTool("brush", true);
+    applyModalState();
+    applyTheme();
+    loadState();
+  </script>
+</body>
+</html>
