@@ -1001,6 +1001,217 @@
       box-shadow: 4px 4px 0 var(--ink);
     }
 
+    .is-studio #studioScreen {
+      background: #f7f4eb;
+    }
+
+    .is-studio #studioScreen::before {
+      content: none;
+    }
+
+    .is-studio #studioMockup {
+      display: none;
+    }
+
+    .studio-canvas-shell {
+      display: none;
+    }
+
+    .is-studio .studio-canvas-shell {
+      position: absolute;
+      left: 148px;
+      top: 78px;
+      z-index: 9;
+      display: block;
+      width: 1450px;
+      height: 950px;
+      background: #fffefa;
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      pointer-events: none;
+    }
+
+    .is-studio .paint-canvas {
+      left: 148px;
+      top: 78px;
+      width: 1450px;
+      height: 950px;
+      background: transparent;
+    }
+
+    .is-studio .note-layer {
+      display: none;
+    }
+
+    .is-studio .shape-preview {
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+    }
+
+    .is-studio .studio-controls {
+      top: 78px;
+      left: 24px;
+      z-index: 76;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      width: 104px;
+      max-height: none;
+      padding: 10px;
+      overflow: visible;
+      background: rgba(255, 254, 250, 0.96);
+      border: 3px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    .is-studio .tool-hot {
+      height: 46px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      box-shadow: none;
+      font-size: 13px;
+    }
+
+    .is-studio .studio-topbar {
+      top: 18px;
+      left: 24px;
+      width: 1574px;
+      min-height: 44px;
+      padding: 8px 10px 8px 14px;
+      background: rgba(255, 254, 250, 0.96);
+      border: 3px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    .is-studio .studio-room-meta {
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .is-studio .studio-room-meta strong {
+      font-size: 18px;
+    }
+
+    .is-studio .studio-room-meta span {
+      font-size: 12px;
+    }
+
+    .is-studio .studio-nav-actions {
+      gap: 6px;
+    }
+
+    .is-studio .studio-nav-button {
+      min-width: 64px;
+      height: 32px;
+      padding: 0 10px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .is-studio .collab-panel {
+      top: 78px;
+      right: 24px;
+      bottom: 52px;
+      width: 274px;
+      padding: 12px;
+      background: rgba(255, 254, 250, 0.96);
+      border: 3px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    .is-studio .collab-heading {
+      margin-bottom: 8px;
+    }
+
+    .is-studio .collab-heading strong {
+      font-size: 18px;
+    }
+
+    .is-studio .live-pill {
+      padding: 5px 8px;
+      border: 2px solid var(--ink);
+      font-size: 11px;
+    }
+
+    .is-studio .call-status {
+      padding: 8px 10px;
+      border: 2px solid var(--ink);
+      border-radius: 9px;
+      font-size: 12px;
+    }
+
+    .is-studio .panel-label {
+      margin: 12px 0 6px;
+      font-size: 11px;
+    }
+
+    .is-studio .participant-list {
+      gap: 5px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .is-studio .participant-row {
+      grid-template-columns: 10px 1fr auto;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 8px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .is-studio .presence-dot {
+      width: 9px;
+      height: 9px;
+      border: 2px solid var(--ink);
+    }
+
+    .is-studio .participant-state {
+      font-size: 10px;
+    }
+
+    .is-studio .chat-log {
+      gap: 5px;
+      min-height: 0;
+    }
+
+    .is-studio .chat-line {
+      padding: 7px 8px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .is-studio .chat-line strong {
+      font-size: 10px;
+    }
+
+    .is-studio .chat-form {
+      grid-template-columns: 1fr 46px;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .is-studio .chat-input {
+      height: 34px;
+      padding: 0 9px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .is-studio .chat-send {
+      height: 34px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
     .result-card {
       position: absolute;
       top: 238px;
@@ -1471,6 +1682,7 @@
 
     <section class="screen" id="studioScreen" aria-label="드로잉 작업공간">
       <img class="mockup" src="PNG/ac아트보드 4.png" alt="" id="studioMockup" />
+      <div class="studio-canvas-shell" aria-hidden="true"></div>
       <canvas class="paint-canvas" id="paintCanvas" width="1566" height="1080"></canvas>
       <div class="note-layer" id="noteLayer"></div>
       <div class="shape-preview" id="shapePreview"></div>
@@ -1481,37 +1693,27 @@
       <nav class="studio-topbar" aria-label="작업공간 네비게이션">
         <div class="studio-room-meta">
           <strong id="studioRoomTitle">과제방</strong>
-          <span id="studioRoomStatus">팀 작업 · 음성 통화 연결됨</span>
+          <span id="studioRoomStatus">실시간 협업 연결 대기</span>
         </div>
         <div class="studio-nav-actions">
-          <button class="studio-nav-button" type="button" data-action="leave">나가기</button>
+          <button class="studio-nav-button" type="button" data-action="leave">목록</button>
+          <button class="studio-nav-button" type="button" data-action="link">링크</button>
           <button class="studio-nav-button" type="button" data-action="save">저장</button>
-          <button class="studio-nav-button" type="button" data-action="share">공유</button>
-          <button class="studio-nav-button" type="button" data-action="export">내보내기</button>
+          <button class="studio-nav-button" type="button" data-action="share">결과</button>
         </div>
       </nav>
-      <aside class="collab-panel" id="collabPanel" aria-label="팀 통화 패널">
+      <aside class="collab-panel" id="collabPanel" aria-label="협업 대화 패널">
         <div class="collab-heading">
-          <strong>팀 통화</strong>
+          <strong>협업</strong>
           <span class="live-pill">LIVE</span>
         </div>
         <div class="call-status" id="callStatus"></div>
-        <div class="call-controls" aria-label="통화 컨트롤">
-          <button class="call-control" id="micToggle" type="button" data-call="mic"></button>
-          <button class="call-control" id="cameraToggle" type="button" data-call="camera"></button>
-          <button class="call-control" id="screenToggle" type="button" data-call="screen"></button>
-        </div>
+        <button class="call-control sr-only" id="micToggle" type="button" data-call="mic" hidden></button>
+        <button class="call-control sr-only" id="cameraToggle" type="button" data-call="camera" hidden></button>
+        <button class="call-control sr-only" id="screenToggle" type="button" data-call="screen" hidden></button>
 
         <div class="panel-label">참여자</div>
         <div class="participant-list" id="participantList"></div>
-
-        <div class="panel-label">협업 도구</div>
-        <div class="feature-grid">
-          <button class="feature-chip" type="button" data-feature="comment">댓글 핀</button>
-          <button class="feature-chip" type="button" data-feature="version">버전 저장</button>
-          <button class="feature-chip" type="button" data-feature="focus">집중 모드</button>
-          <button class="feature-chip" type="button" data-feature="sync">동기화</button>
-        </div>
 
         <div class="panel-label">채팅</div>
         <div class="team-chat">
@@ -1556,7 +1758,7 @@
     const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
     const DESIGN = { width: 1920, height: 1080 };
-    const PAINT = { x: 354, y: 0, width: 1566, height: 1080 };
+    const PAINT = { x: 148, y: 78, width: 1450, height: 950 };
     const ROW_TOPS = [366, 493, 621, 749, 877];
     const DEFAULT_ROOM = "000의 과제방";
     const STORAGE_KEY = "villain-page-state-v2";
@@ -1606,7 +1808,7 @@
 
     const state = {
       screen: "home",
-      activeTool: "brush",
+      activeTool: "pencil",
       modalOpen: false,
       darkMode: false,
       micMuted: false,
@@ -1626,9 +1828,15 @@
       shares: [],
       notes: [],
       chatMessages: [
-        { id: 1, author: "시스템", text: "방에 들어오면 팀원 접속, 채팅, 통화 상태가 표시됩니다." }
+        { id: 1, author: "시스템", text: "같은 주소로 들어오면 이 캔버스에 함께 접속합니다." }
       ],
       participants: [],
+      canvasObjects: [],
+      selectedObjectId: null,
+      dragMode: null,
+      dragStart: null,
+      dragOrigin: null,
+      liveObject: null,
       drawing: false,
       panning: false,
       applyingRemote: false,
@@ -1725,7 +1933,9 @@
       paintCtx.lineCap = "round";
       paintCtx.lineJoin = "round";
 
-      if (previous) {
+      if (state.canvasObjects.length) {
+        renderCanvasObjects();
+      } else if (previous) {
         const image = new Image();
         image.onload = () => {
           paintCtx.clearRect(0, 0, PAINT.width, PAINT.height);
@@ -1756,6 +1966,7 @@
       canvasView.x = localX - PAINT.x - paintPoint.x * nextScale;
       canvasView.y = localY - PAINT.y - paintPoint.y * nextScale;
       applyCanvasView();
+      renderCollaborationPanel();
       showToast(`확대 ${Math.round(nextScale * 100)}%`);
     };
 
@@ -1764,6 +1975,7 @@
       canvasView.x = 0;
       canvasView.y = 0;
       applyCanvasView();
+      renderCollaborationPanel();
       showToast("캔버스 보기 초기화");
     };
 
@@ -1776,7 +1988,7 @@
     };
 
     const pushUndo = () => {
-      state.undoStack.push(paintCanvas.toDataURL("image/png"));
+      state.undoStack.push(exportDrawingData());
       if (state.undoStack.length > 20) {
         state.undoStack.shift();
       }
@@ -1793,6 +2005,198 @@
         paintCtx.drawImage(image, 0, 0, PAINT.width, PAINT.height);
       };
       image.src = dataUrl;
+    };
+
+    const exportDrawingData = () => ({
+      objects: state.canvasObjects.map((object) => JSON.parse(JSON.stringify(object)))
+    });
+
+    const importDrawingData = (drawingData) => {
+      const objects = Array.isArray(drawingData?.objects) ? drawingData.objects : [];
+      state.canvasObjects = objects
+        .filter((object) => object && object.id && ["stroke", "rect"].includes(object.type))
+        .map((object) => JSON.parse(JSON.stringify(object)));
+      if (!state.canvasObjects.some((object) => object.id === state.selectedObjectId)) {
+        state.selectedObjectId = null;
+      }
+      renderCanvasObjects();
+    };
+
+    const selectedCanvasObject = () => (
+      state.canvasObjects.find((object) => object.id === state.selectedObjectId) || null
+    );
+
+    const objectBounds = (object) => {
+      if (!object) return null;
+      if (object.type === "rect") {
+        return {
+          x: Math.min(object.x, object.x + object.width),
+          y: Math.min(object.y, object.y + object.height),
+          width: Math.abs(object.width),
+          height: Math.abs(object.height)
+        };
+      }
+      const points = Array.isArray(object.points) ? object.points : [];
+      if (!points.length) return null;
+      const xs = points.map((point) => point.x);
+      const ys = points.map((point) => point.y);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      return {
+        x,
+        y,
+        width: Math.max(...xs) - x,
+        height: Math.max(...ys) - y
+      };
+    };
+
+    const normalizeRectObject = (object) => {
+      if (!object || object.type !== "rect") return object;
+      const bounds = objectBounds(object);
+      object.x = bounds.x;
+      object.y = bounds.y;
+      object.width = bounds.width;
+      object.height = bounds.height;
+      return object;
+    };
+
+    const pointInBounds = (point, bounds, padding = 0) => (
+      bounds &&
+      point.x >= bounds.x - padding &&
+      point.x <= bounds.x + bounds.width + padding &&
+      point.y >= bounds.y - padding &&
+      point.y <= bounds.y + bounds.height + padding
+    );
+
+    const distanceToSegment = (point, a, b) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      if (dx === 0 && dy === 0) {
+        return Math.hypot(point.x - a.x, point.y - a.y);
+      }
+      const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / (dx * dx + dy * dy)));
+      return Math.hypot(point.x - (a.x + dx * t), point.y - (a.y + dy * t));
+    };
+
+    const pointNearStroke = (point, object, padding = 18) => {
+      const points = Array.isArray(object.points) ? object.points : [];
+      for (let index = 1; index < points.length; index += 1) {
+        if (distanceToSegment(point, points[index - 1], points[index]) <= padding) {
+          return true;
+        }
+      }
+      return points.some((strokePoint) => Math.hypot(point.x - strokePoint.x, point.y - strokePoint.y) <= padding);
+    };
+
+    const hitCanvasObject = (point, options = {}) => {
+      for (let index = state.canvasObjects.length - 1; index >= 0; index -= 1) {
+        const object = state.canvasObjects[index];
+        if (object.type === "rect" && pointInBounds(point, objectBounds(object), 10)) {
+          return object;
+        }
+        if (options.includeStrokes && object.type === "stroke" && pointNearStroke(point, object)) {
+          return object;
+        }
+      }
+      return null;
+    };
+
+    const resizeHandleBounds = (object) => {
+      const bounds = objectBounds(object);
+      if (!bounds || object.type !== "rect") return null;
+      return {
+        x: bounds.x + bounds.width - 12,
+        y: bounds.y + bounds.height - 12,
+        width: 24,
+        height: 24
+      };
+    };
+
+    const drawCanvasObject = (object) => {
+      paintCtx.save();
+      paintCtx.strokeStyle = "#111";
+      paintCtx.lineCap = "round";
+      paintCtx.lineJoin = "round";
+
+      if (object.type === "stroke") {
+        const points = Array.isArray(object.points) ? object.points : [];
+        if (points.length) {
+          paintCtx.lineWidth = object.width || 7;
+          paintCtx.beginPath();
+          paintCtx.moveTo(points[0].x, points[0].y);
+          points.slice(1).forEach((point) => paintCtx.lineTo(point.x, point.y));
+          paintCtx.stroke();
+        }
+      }
+
+      if (object.type === "rect") {
+        const bounds = objectBounds(object);
+        if (bounds) {
+          paintCtx.lineWidth = 5;
+          paintCtx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        }
+      }
+
+      paintCtx.restore();
+    };
+
+    const drawSelection = () => {
+      const object = selectedCanvasObject();
+      const bounds = objectBounds(object);
+      if (!object || object.type !== "rect" || !bounds) return;
+
+      paintCtx.save();
+      paintCtx.strokeStyle = "#326bff";
+      paintCtx.fillStyle = "#326bff";
+      paintCtx.lineWidth = 2;
+      paintCtx.setLineDash([9, 6]);
+      paintCtx.strokeRect(bounds.x - 6, bounds.y - 6, bounds.width + 12, bounds.height + 12);
+      paintCtx.setLineDash([]);
+      const handle = resizeHandleBounds(object);
+      if (handle) {
+        paintCtx.fillRect(handle.x, handle.y, handle.width, handle.height);
+      }
+      paintCtx.restore();
+    };
+
+    const renderCanvasObjects = () => {
+      paintCtx.clearRect(0, 0, PAINT.width, PAINT.height);
+      paintCtx.save();
+      paintCtx.fillStyle = "#fffefa";
+      paintCtx.fillRect(0, 0, PAINT.width, PAINT.height);
+      paintCtx.restore();
+      state.canvasObjects.forEach(drawCanvasObject);
+      drawSelection();
+    };
+
+    const upsertCanvasObject = (object) => {
+      const next = JSON.parse(JSON.stringify(object));
+      const index = state.canvasObjects.findIndex((item) => item.id === next.id);
+      if (index >= 0) {
+        state.canvasObjects[index] = next;
+      } else {
+        state.canvasObjects.push(next);
+      }
+      renderCanvasObjects();
+    };
+
+    const removeCanvasObject = (objectId) => {
+      const before = state.canvasObjects.length;
+      state.canvasObjects = state.canvasObjects.filter((object) => object.id !== objectId);
+      if (state.selectedObjectId === objectId) {
+        state.selectedObjectId = null;
+      }
+      if (state.canvasObjects.length !== before) {
+        renderCanvasObjects();
+      }
+    };
+
+    const eraseCanvasObjectAt = (point) => {
+      const target = hitCanvasObject(point, { includeStrokes: true });
+      if (!target) return false;
+      removeCanvasObject(target.id);
+      sendCanvasOperation({ kind: "object-remove", objectId: target.id });
+      return true;
     };
 
     const drawSegment = (from, to, tool = state.activeTool) => {
@@ -1931,6 +2335,27 @@
     const applyCanvasOperation = (operation) => {
       if (!operation) return;
       state.applyingRemote = true;
+
+      if (operation.kind === "object-upsert" && operation.object) {
+        upsertCanvasObject(operation.object);
+        state.applyingRemote = false;
+        saveRoomState(true);
+        return;
+      }
+
+      if (operation.kind === "object-remove" && operation.objectId) {
+        removeCanvasObject(operation.objectId);
+        state.applyingRemote = false;
+        saveRoomState(true);
+        return;
+      }
+
+      if (operation.kind === "objects" && Array.isArray(operation.objects)) {
+        importDrawingData({ objects: operation.objects });
+        state.applyingRemote = false;
+        saveRoomState(true);
+        return;
+      }
 
       if (operation.kind === "segment") {
         drawSegment(operation.from, operation.to, operation.tool);
@@ -2152,7 +2577,11 @@
             syncRooms();
           }
         }
-        if (currentRealtimeKey() === currentRoomKey() && message.canvas) {
+        if (currentRealtimeKey() === currentRoomKey() && message.drawingData) {
+          state.applyingRemote = true;
+          importDrawingData(message.drawingData);
+          state.applyingRemote = false;
+        } else if (currentRealtimeKey() === currentRoomKey() && message.canvas) {
           state.applyingRemote = true;
           restoreCanvas(message.canvas);
           state.applyingRemote = false;
@@ -2161,8 +2590,8 @@
           state.notes = message.notes;
           renderNotes();
         }
-        if (currentRealtimeKey() === currentRoomKey() && (message.canvas || Array.isArray(message.notes))) {
-          storeIncomingRoomState(message.canvas, state.notes);
+        if (currentRealtimeKey() === currentRoomKey() && (message.drawingData || message.canvas || Array.isArray(message.notes))) {
+          storeIncomingRoomState(message.canvas, state.notes, message.drawingData);
         }
         renderCollaborationPanel();
         renderResults();
@@ -2226,7 +2655,9 @@
 
       if (message.type === "canvas-state" && message.sourceId !== localUser.id && message.dataRoom === currentRoomKey()) {
         state.applyingRemote = true;
-        if (message.canvas) {
+        if (message.drawingData) {
+          importDrawingData(message.drawingData);
+        } else if (message.canvas) {
           restoreCanvas(message.canvas);
         }
         if (Array.isArray(message.notes)) {
@@ -2234,7 +2665,7 @@
           renderNotes();
         }
         state.applyingRemote = false;
-        storeIncomingRoomState(message.canvas, state.notes);
+        storeIncomingRoomState(message.canvas, state.notes, message.drawingData);
       }
 
       if (message.type === "signal" && message.to === localUser.id) {
@@ -2390,34 +2821,18 @@
 
     const renderCollaborationPanel = () => {
       const participants = visibleParticipants();
-      const mutedCount = participants.filter((participant) => participant.micMuted).length;
       studioRoomTitle.textContent = currentRoomName();
-      studioRoomStatus.textContent = state.screenSharing
-        ? "팀 작업 · 화면 공유 중"
-        : `팀 작업 · 버전 ${state.versionCount}`;
+      studioRoomStatus.textContent = realtime.connected
+        ? `실시간 협업 중 · ${Math.round(canvasView.scale * 100)}%`
+        : "사이트 주소로 입장하면 같은 방에 연결됩니다";
       callStatus.textContent = realtime.connected
-        ? `${participants.length}명 접속 · ${mutedCount}명 음소거 · ${state.syncReady ? "동기화 완료" : "동기화 대기"}`
-        : "실시간 서버 연결 대기 · 배포 후 Worker 연결 필요";
-
-      micToggle.textContent = realtime.localStream
-        ? (state.micMuted ? "마이크 꺼짐" : "마이크 켜짐")
-        : "통화 시작";
-      micToggle.classList.toggle("is-danger", state.micMuted);
-      micToggle.setAttribute("aria-pressed", String(state.micMuted));
-
-      cameraToggle.textContent = state.cameraOn ? "카메라 켜짐" : "카메라 꺼짐";
-      cameraToggle.classList.toggle("is-active", state.cameraOn);
-      cameraToggle.setAttribute("aria-pressed", String(state.cameraOn));
-
-      screenToggle.textContent = state.screenSharing ? "공유 중" : "화면 공유";
-      screenToggle.classList.toggle("is-active", state.screenSharing);
-      screenToggle.setAttribute("aria-pressed", String(state.screenSharing));
+        ? `${participants.length}명 접속 · 자동 동기화`
+        : "연결 대기";
 
       participantList.innerHTML = "";
       participants.forEach((member) => {
         const button = document.createElement("button");
-        const muted = Boolean(member.micMuted);
-        button.className = `participant-row${muted ? " is-muted" : ""}`;
+        button.className = "participant-row";
         button.type = "button";
         button.disabled = true;
 
@@ -2430,25 +2845,10 @@
 
         const status = document.createElement("span");
         status.className = "participant-state";
-        status.textContent = member.calling ? (muted ? "음소거" : "통화중") : "접속";
+        status.textContent = "접속";
 
         button.append(dot, name, status);
         participantList.appendChild(button);
-      });
-
-      $$(".feature-chip", collabPanel).forEach((button) => {
-        const feature = button.dataset.feature;
-        button.classList.toggle("is-active", (
-          (feature === "comment" && state.commentMode) ||
-          (feature === "focus" && state.focusMode) ||
-          (feature === "sync" && state.syncReady)
-        ));
-        if (feature === "version") {
-          button.textContent = state.versionCount ? `버전 ${state.versionCount}` : "버전 저장";
-        }
-        if (feature === "sync") {
-          button.textContent = state.syncReady ? "동기화 완료" : "동기화";
-        }
       });
 
       chatLog.innerHTML = "";
@@ -2516,7 +2916,7 @@
 
         const meta = document.createElement("span");
         meta.className = "room-card-meta";
-        meta.textContent = "실시간 협업 · 통화 가능";
+        meta.textContent = "주소 공유로 실시간 협업";
 
         button.append(name, meta);
         button.addEventListener("click", () => {
@@ -2541,6 +2941,7 @@
       }
       state.selectedRoomId = roomId;
       setScreen("studio");
+      updateRoomRoute();
       showToast("작업공간 입장");
     };
 
@@ -2578,23 +2979,10 @@
 
     const toolButtons = [
       ["select", 0, 0],
-      ["shape", 1, 0],
-      ["lasso", 0, 1],
-      ["spark", 1, 1],
-      ["hand", 0, 2],
-      ["zoom", 1, 2],
-      ["crop", 0, 3],
-      ["text", 1, 3],
-      ["fill", 0, 4],
-      ["pattern", 1, 4],
-      ["line", 0, 5],
-      ["arrow", 1, 5],
-      ["eraser", 0, 6],
-      ["brush", 1, 6],
-      ["stamp", 0, 7],
-      ["voice", 1, 7],
-      ["drop", 0, 8],
-      ["triangle", 1, 8]
+      ["pencil", 0, 1],
+      ["shape", 0, 2],
+      ["eraser", 0, 3],
+      ["zoom", 0, 4]
     ];
 
     const setTool = (tool, silent = false) => {
@@ -2603,12 +2991,12 @@
       $$(".tool-hot", studioControls).forEach((button) => {
         button.classList.toggle("is-active", button.dataset.tool === tool);
       });
-      if (tool === "hand") {
-        paintCanvas.style.cursor = "grab";
-      } else if (tool === "zoom") {
+      if (tool === "zoom") {
         paintCanvas.style.cursor = "zoom-in";
+      } else if (tool === "select") {
+        paintCanvas.style.cursor = "default";
       } else {
-        paintCanvas.style.cursor = ["brush", "eraser", "shape", "line", "text", "arrow", "lasso", "spark", "fill", "pattern", "stamp", "drop", "triangle"].includes(tool) ? "crosshair" : "default";
+        paintCanvas.style.cursor = ["pencil", "eraser", "shape"].includes(tool) ? "crosshair" : "default";
       }
       if (!silent) {
         showToast(`${toolLabel(tool)} 선택`);
@@ -2617,23 +3005,10 @@
 
     const toolLabel = (tool) => ({
       select: "선택",
-      shape: "사각형",
-      lasso: "올가미",
-      spark: "효과",
-      hand: "이동",
-      zoom: "확대",
-      crop: "자르기",
-      text: "텍스트",
-      fill: "채우기",
-      pattern: "패턴",
-      line: "선",
-      arrow: "화살표",
-      eraser: "지우개",
-      brush: "펜",
-      stamp: "도장",
-      voice: "음성",
-      drop: "물방울",
-      triangle: "삼각형"
+      pencil: "연필",
+      shape: "도형",
+      zoom: "줌",
+      eraser: "지우개"
     }[tool] || tool);
 
     const renderStudioControls = () => {
@@ -2648,12 +3023,6 @@
         button.textContent = toolLabel(tool);
         button.addEventListener("click", () => {
           setTool(tool);
-          if (tool === "voice") {
-            startVoiceCall();
-          }
-          if (tool === "crop") {
-            resetCanvasView();
-          }
         });
         studioControls.appendChild(button);
       });
@@ -2662,7 +3031,11 @@
     const handleSideAction = async (action) => {
       if (action === "leave") {
         setScreen("workspace");
+        clearRoomRoute();
         showToast("작업공간 목록으로 이동");
+      }
+      if (action === "link") {
+        await copyRoomLink();
       }
       if (action === "save") {
         broadcastRoomState(true);
@@ -2701,43 +3074,40 @@
       if (state.screen !== "studio") return;
       const point = toPaintPoint(event);
 
-      if (state.activeTool === "hand") {
-        state.panning = true;
-        const frameScale = getFrameScale();
-        canvasView.panStart = {
-          clientX: event.clientX,
-          clientY: event.clientY,
-          x: canvasView.x,
-          y: canvasView.y,
-          frameScale
-        };
-        paintCanvas.style.cursor = "grabbing";
-        paintCanvas.setPointerCapture(event.pointerId);
-        return;
-      }
-
       if (state.activeTool === "zoom") {
         zoomCanvasAt(event, event.shiftKey || event.altKey ? 0.82 : 1.18);
         return;
       }
 
-      if (state.activeTool === "text") {
-        createNote(point);
-        showToast("메모 추가");
+      if (state.activeTool === "select") {
+        const selected = selectedCanvasObject();
+        const handle = selected ? resizeHandleBounds(selected) : null;
+        const target = handle && pointInBounds(point, handle, 8)
+          ? selected
+          : hitCanvasObject(point);
+
+        state.selectedObjectId = target?.type === "rect" ? target.id : null;
+        renderCanvasObjects();
+
+        if (target?.type === "rect") {
+          pushUndo();
+          state.dragMode = target === selected && handle && pointInBounds(point, handle, 8) ? "resize" : "move";
+          state.dragStart = point;
+          state.dragOrigin = JSON.parse(JSON.stringify(target));
+          paintCanvas.setPointerCapture(event.pointerId);
+        }
         return;
       }
 
-      if (["spark", "fill", "pattern", "stamp", "drop"].includes(state.activeTool)) {
-        stampAt(point, state.activeTool);
+      if (state.activeTool === "eraser") {
+        pushUndo();
+        state.drawing = true;
+        eraseCanvasObjectAt(point);
+        paintCanvas.setPointerCapture(event.pointerId);
         return;
       }
 
-      if (state.activeTool === "voice") {
-        startVoiceCall();
-        return;
-      }
-
-      if (!["brush", "eraser", "shape", "line", "arrow", "lasso", "triangle"].includes(state.activeTool)) {
+      if (!["pencil", "shape"].includes(state.activeTool)) {
         return;
       }
 
@@ -2747,81 +3117,120 @@
       state.lastPoint = point;
       paintCanvas.setPointerCapture(event.pointerId);
 
-      if (state.activeTool === "shape" || state.activeTool === "triangle") {
-        setShapePreview(point, point);
+      if (state.activeTool === "shape") {
+        state.liveObject = {
+          id: makeId(),
+          type: "rect",
+          x: point.x,
+          y: point.y,
+          width: 1,
+          height: 1
+        };
+        state.selectedObjectId = state.liveObject.id;
+        upsertCanvasObject(state.liveObject);
+      }
+
+      if (state.activeTool === "pencil") {
+        state.liveObject = {
+          id: makeId(),
+          type: "stroke",
+          points: [point],
+          width: 7
+        };
+        state.selectedObjectId = null;
+        upsertCanvasObject(state.liveObject);
       }
     });
 
     paintCanvas.addEventListener("pointermove", (event) => {
-      if (state.panning && canvasView.panStart) {
-        const scale = canvasView.panStart.frameScale || getFrameScale();
-        canvasView.x = canvasView.panStart.x + (event.clientX - canvasView.panStart.clientX) / scale;
-        canvasView.y = canvasView.panStart.y + (event.clientY - canvasView.panStart.clientY) / scale;
-        applyCanvasView();
-        return;
-      }
-
-      if (!state.drawing || !state.lastPoint) return;
       const point = toPaintPoint(event);
 
-      if (state.activeTool === "shape" || state.activeTool === "triangle") {
-        setShapePreview(state.startPoint, point);
+      if (state.dragMode && state.dragStart && state.dragOrigin) {
+        const object = selectedCanvasObject();
+        if (!object) return;
+        const dx = point.x - state.dragStart.x;
+        const dy = point.y - state.dragStart.y;
+        if (state.dragMode === "move") {
+          object.x = state.dragOrigin.x + dx;
+          object.y = state.dragOrigin.y + dy;
+        }
+        if (state.dragMode === "resize") {
+          object.width = Math.max(16, state.dragOrigin.width + dx);
+          object.height = Math.max(16, state.dragOrigin.height + dy);
+        }
+        renderCanvasObjects();
+        sendCanvasOperation({ kind: "object-upsert", object });
         return;
       }
 
-      if (state.activeTool === "line" || state.activeTool === "arrow") {
+      if (state.activeTool === "eraser" && state.drawing) {
+        eraseCanvasObjectAt(point);
         return;
       }
 
-      drawSegment(state.lastPoint, point);
-      sendCanvasOperation({
-        kind: "segment",
-        tool: state.activeTool,
-        from: state.lastPoint,
-        to: point
-      });
+      if (!state.drawing || !state.liveObject || !state.lastPoint) return;
+
+      if (state.liveObject.type === "rect") {
+        state.liveObject.width = point.x - state.liveObject.x;
+        state.liveObject.height = point.y - state.liveObject.y;
+        upsertCanvasObject(state.liveObject);
+        sendCanvasOperation({ kind: "object-upsert", object: state.liveObject });
+        return;
+      }
+
+      if (state.liveObject.type === "stroke") {
+        if (Math.hypot(point.x - state.lastPoint.x, point.y - state.lastPoint.y) < 2) return;
+        state.liveObject.points.push(point);
+        upsertCanvasObject(state.liveObject);
+        sendCanvasOperation({ kind: "object-upsert", object: state.liveObject });
+      }
       state.lastPoint = point;
     });
 
     const finishDrawing = (event) => {
-      if (state.panning) {
-        state.panning = false;
-        canvasView.panStart = null;
-        paintCanvas.style.cursor = "grab";
+      if (state.dragMode) {
+        const object = selectedCanvasObject();
+        if (object) {
+          normalizeRectObject(object);
+          renderCanvasObjects();
+          sendCanvasOperation({ kind: "object-upsert", object });
+          broadcastRoomState(true);
+        }
+        state.dragMode = null;
+        state.dragStart = null;
+        state.dragOrigin = null;
         return;
       }
 
-      if (!state.drawing || !state.startPoint) return;
-      const point = toPaintPoint(event);
-
-      if (state.activeTool === "shape") {
-        drawRoughEllipse(state.startPoint, point);
-        sendCanvasOperation({ kind: "shape", start: state.startPoint, end: point });
-        shapePreview.style.display = "none";
+      if (state.activeTool === "eraser" && state.drawing) {
+        state.drawing = false;
+        broadcastRoomState(true);
+        return;
       }
 
-      if (state.activeTool === "triangle") {
-        drawTriangle(state.startPoint, point);
-        sendCanvasOperation({ kind: "triangle", start: state.startPoint, end: point });
-        shapePreview.style.display = "none";
-      }
+      if (!state.drawing || !state.liveObject) return;
 
-      if (state.activeTool === "line" || state.activeTool === "arrow") {
-        drawSegment(state.startPoint, point);
-        if (state.activeTool === "arrow") {
-          drawArrowHead(state.startPoint, point);
+      if (state.liveObject.type === "rect") {
+        normalizeRectObject(state.liveObject);
+        upsertCanvasObject(state.liveObject);
+        const bounds = objectBounds(state.liveObject);
+        if (!bounds || bounds.width < 10 || bounds.height < 10) {
+          removeCanvasObject(state.liveObject.id);
+          sendCanvasOperation({ kind: "object-remove", objectId: state.liveObject.id });
+        } else {
+          sendCanvasOperation({ kind: "object-upsert", object: state.liveObject });
         }
-        sendCanvasOperation({
-          kind: state.activeTool,
-          tool: state.activeTool,
-          start: state.startPoint,
-          end: point
-        });
+      }
+
+      if (state.liveObject.type === "stroke") {
+        sendCanvasOperation({ kind: "object-upsert", object: state.liveObject });
       }
 
       state.drawing = false;
       state.startPoint = null;
       state.lastPoint = null;
+      state.liveObject = null;
+      shapePreview.style.display = "none";
       broadcastRoomState(true);
     };
 
@@ -2853,7 +3262,10 @@
       output.width = DESIGN.width;
       output.height = DESIGN.height;
       const outputCtx = output.getContext("2d");
-      await drawImageElement(outputCtx, studioMockup, 0, 0, DESIGN.width, DESIGN.height);
+      outputCtx.fillStyle = "#f7f4eb";
+      outputCtx.fillRect(0, 0, DESIGN.width, DESIGN.height);
+      outputCtx.fillStyle = "#fffefa";
+      outputCtx.fillRect(PAINT.x, PAINT.y, PAINT.width, PAINT.height);
       outputCtx.drawImage(paintCanvas, PAINT.x, PAINT.y, PAINT.width, PAINT.height);
       drawNotesForExport(outputCtx);
       return output.toDataURL("image/png");
@@ -2932,6 +3344,43 @@
       url.searchParams.set("share", share.id);
       url.hash = `share-${share.id}`;
       return url.href;
+    };
+
+    const getRoomUrl = (roomKey = currentRoomKey()) => {
+      const url = (location.protocol === "http:" || location.protocol === "https:")
+        ? new URL(location.href)
+        : new URL("https://art-realtime.local/");
+      url.searchParams.set("room", roomKey);
+      url.searchParams.delete("share");
+      url.hash = "";
+      return url.href;
+    };
+
+    const updateRoomRoute = () => {
+      if (!(location.protocol === "http:" || location.protocol === "https:")) return;
+      const url = new URL(location.href);
+      url.searchParams.set("room", currentRoomKey());
+      url.searchParams.delete("share");
+      url.hash = "";
+      history.replaceState(null, "", url);
+    };
+
+    const clearRoomRoute = () => {
+      if (!(location.protocol === "http:" || location.protocol === "https:")) return;
+      const url = new URL(location.href);
+      url.searchParams.delete("room");
+      url.searchParams.delete("share");
+      url.hash = "";
+      history.replaceState(null, "", url);
+    };
+
+    const copyRoomLink = async () => {
+      try {
+        await navigator.clipboard.writeText(getRoomUrl());
+        showToast("협업 링크 복사 완료");
+      } catch {
+        showToast("협업 링크를 복사하지 못했습니다.");
+      }
     };
 
     const updateShareRoute = (share) => {
@@ -3218,7 +3667,13 @@
       }
       state.notes = Array.isArray(roomState?.notes) ? roomState.notes : [];
       renderNotes();
-      restoreCanvas(roomState?.canvas || null);
+      if (Array.isArray(roomState?.drawingData?.objects) || Array.isArray(roomState?.objects)) {
+        importDrawingData(roomState.drawingData || { objects: roomState.objects });
+      } else {
+        state.canvasObjects = [];
+        state.selectedObjectId = null;
+        restoreCanvas(roomState?.canvas || null);
+      }
     };
 
     const saveRoomState = (includeCanvas = true) => {
@@ -3231,13 +3686,14 @@
       }
       const payload = {
         notes: state.notes,
+        drawingData: exportDrawingData(),
         canvas: includeCanvas ? paintCanvas.toDataURL("image/png") : previous?.canvas,
         updatedAt: Date.now()
       };
       localStorage.setItem(roomStateKey(), JSON.stringify(payload));
     };
 
-    const storeIncomingRoomState = (canvas, notes) => {
+    const storeIncomingRoomState = (canvas, notes, drawingData) => {
       let previous = null;
       try {
         previous = JSON.parse(localStorage.getItem(roomStateKey()) || "null");
@@ -3246,6 +3702,7 @@
       }
       localStorage.setItem(roomStateKey(), JSON.stringify({
         canvas: canvas || previous?.canvas || null,
+        drawingData: drawingData || previous?.drawingData || { objects: state.canvasObjects },
         notes: Array.isArray(notes) ? notes : (previous?.notes || []),
         updatedAt: Date.now()
       }));
@@ -3259,6 +3716,7 @@
         dataRoom: currentRoomKey(),
         sourceId: localUser.id,
         canvas: includeCanvas ? paintCanvas.toDataURL("image/png") : undefined,
+        drawingData: exportDrawingData(),
         notes: state.notes,
         updatedAt: Date.now()
       });
@@ -3317,7 +3775,7 @@
         ));
         if (!state.chatMessages.length) {
           state.chatMessages = [
-            { id: 1, author: "시스템", text: "방에 들어오면 팀원 접속, 채팅, 통화 상태가 표시됩니다." }
+            { id: 1, author: "시스템", text: "같은 주소로 들어오면 이 캔버스에 함께 접속합니다." }
           ];
         }
       }
@@ -3362,6 +3820,9 @@
         state.activeDisqusShareId = decodeURIComponent(shareParam);
         setScreen("result");
         renderResults();
+      } else if (roomParam) {
+        setScreen("studio");
+        updateRoomRoute();
       }
     };
 
@@ -3568,7 +4029,12 @@
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         const previous = state.undoStack.pop();
         if (previous) {
-          restoreCanvas(previous);
+          if (previous.objects) {
+            importDrawingData(previous);
+            broadcastRoomState(true);
+          } else {
+            restoreCanvas(previous);
+          }
           showToast("되돌리기");
         }
       }
@@ -3589,7 +4055,7 @@
     renderStudioControls();
     renderRooms();
     renderCollaborationPanel();
-    setTool("brush", true);
+    setTool("pencil", true);
     applyCanvasView();
     applyModalState();
     applyTheme();

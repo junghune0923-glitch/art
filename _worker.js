@@ -37,17 +37,19 @@ export class RoomObject {
     this.shares = [];
     this.rooms = [];
     this.canvas = null;
+    this.drawingData = null;
     this.notes = [];
     this.loaded = false;
   }
 
   async load() {
     if (this.loaded) return;
-    const stored = await this.state.storage.get(["messages", "shares", "rooms", "canvas", "notes"]);
+    const stored = await this.state.storage.get(["messages", "shares", "rooms", "canvas", "drawingData", "notes"]);
     this.messages = stored.get("messages") || [];
     this.shares = stored.get("shares") || [];
     this.rooms = stored.get("rooms") || [];
     this.canvas = stored.get("canvas") || null;
+    this.drawingData = stored.get("drawingData") || null;
     this.notes = stored.get("notes") || [];
     this.loaded = true;
   }
@@ -78,6 +80,7 @@ export class RoomObject {
       shares: this.shares,
       rooms: this.rooms,
       canvas: this.canvas,
+      drawingData: this.drawingData,
       notes: this.notes
     }));
 
@@ -151,6 +154,10 @@ export class RoomObject {
         this.canvas = message.canvas;
         await this.state.storage.put("canvas", this.canvas);
       }
+      if (message.drawingData) {
+        this.drawingData = message.drawingData;
+        await this.state.storage.put("drawingData", this.drawingData);
+      }
       if (Array.isArray(message.notes)) {
         this.notes = message.notes;
         await this.state.storage.put("notes", this.notes);
@@ -161,6 +168,7 @@ export class RoomObject {
         dataRoom: message.dataRoom,
         sourceId: message.sourceId,
         canvas: message.canvas,
+        drawingData: message.drawingData,
         notes: message.notes,
         updatedAt: message.updatedAt
       });
