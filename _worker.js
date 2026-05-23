@@ -9,6 +9,10 @@ export default {
       return env.ROOMS.get(id).fetch(request);
     }
 
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
     return new Response("Realtime endpoint not found", { status: 404 });
   }
 };
