@@ -1,0 +1,20 @@
+# Local browser verification artifacts
+.codex-browser-profile/
+.codex-cdp-*/
+.codex-dump-*/
+cdp-*.log
+serve-static*.log
+room-browser-verify.png
+
+# Local dependencies and build/cache output
+node_modules/
+dist/
+.wrangler/
+.cache/
+
+# Local environment and OS metadata
+.env
+.env.*
+!.env.example
+Thumbs.db
+.DS_Store
